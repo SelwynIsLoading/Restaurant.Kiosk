@@ -32,6 +32,7 @@ builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<ICurrencyService, CurrencyService>();
 builder.Services.AddSingleton<IPrintQueueService, PrintQueueService>();
 builder.Services.AddScoped<IReceiptService, ReceiptService>();
+builder.Services.AddScoped<ISalesTrackerService, SalesTrackerService>();
 
 builder.Services.AddAuthentication(options =>
     {

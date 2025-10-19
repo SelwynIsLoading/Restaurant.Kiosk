@@ -1,0 +1,393 @@
+@page "/admin/sales"
+@using RestaurantKiosk.Components.Layout
+@using RestaurantKiosk.Data.DTOs
+@using RestaurantKiosk.Data.Services
+
+@layout AdminLayout
+
+@attribute [Authorize]
+
+@inject ISalesTrackerService SalesTrackerService
+@inject NavigationManager NavigationManager
+@inject ILogger<SalesTracker> Logger
+
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="bi bi-graph-up me-2 text-primary"></i>
+                        Sales Analytics
+                    </h2>
+                    <p class="text-muted">Track your sales performance and revenue</p>
+                </div>
+                <div>
+                    <button class="btn btn-outline-secondary" @onclick="NavigateToAdmin">
+                        <i class="bi bi-arrow-left me-2"></i>Back to Admin
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Date Range Filter -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Quick Filters</label>
+                            <div class="btn-group w-100" role="group">
+                                <button type="button" class="btn @(selectedPeriod == "today" ? "btn-primary" : "btn-outline-primary")" @onclick="@(() => LoadPeriodSales("today"))">Today</button>
+                                <button type="button" class="btn @(selectedPeriod == "week" ? "btn-primary" : "btn-outline-primary")" @onclick="@(() => LoadPeriodSales("week"))">Week</button>
+                                <button type="button" class="btn @(selectedPeriod == "month" ? "btn-primary" : "btn-outline-primary")" @onclick="@(() => LoadPeriodSales("month"))">Month</button>
+                                <button type="button" class="btn @(selectedPeriod == "year" ? "btn-primary" : "btn-outline-primary")" @onclick="@(() => LoadPeriodSales("year"))">Year</button>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="fromDate" class="form-label fw-semibold">From Date</label>
+                            <input type="date" class="form-control" id="fromDate" @bind="fromDate">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="toDate" class="form-label fw-semibold">To Date</label>
+                            <input type="date" class="form-control" id="toDate" @bind="toDate">
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-primary w-100" @onclick="LoadCustomDateSales">
+                                <i class="bi bi-filter me-2"></i>Apply Filter
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3 text-muted">Loading sales data...</p>
+        </div>
+    }
+    else if (salesReport != null)
+    {
+        <!-- Statistics Cards -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted mb-1">Total Sales</h6>
+                                <h3 class="mb-0 text-primary">₱@salesReport.TotalSales.ToString("N2")</h3>
+                            </div>
+                            <div class="bg-primary bg-opacity-10 rounded-circle p-3">
+                                <i class="bi bi-cash-stack text-primary" style="font-size: 1.5rem;"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted mb-1">Total Orders</h6>
+                                <h3 class="mb-0 text-success">@salesReport.TotalOrders</h3>
+                                <small class="text-muted">@salesReport.CompletedOrders completed</small>
+                            </div>
+                            <div class="bg-success bg-opacity-10 rounded-circle p-3">
+                                <i class="bi bi-receipt text-success" style="font-size: 1.5rem;"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted mb-1">Avg Order Value</h6>
+                                <h3 class="mb-0 text-info">₱@salesReport.AverageOrderValue.ToString("N2")</h3>
+                            </div>
+                            <div class="bg-info bg-opacity-10 rounded-circle p-3">
+                                <i class="bi bi-graph-up-arrow text-info" style="font-size: 1.5rem;"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted mb-1">Pending Orders</h6>
+                                <h3 class="mb-0 text-warning">@salesReport.PendingOrders</h3>
+                                <small class="text-muted">@salesReport.CancelledOrders cancelled</small>
+                            </div>
+                            <div class="bg-warning bg-opacity-10 rounded-circle p-3">
+                                <i class="bi bi-hourglass-split text-warning" style="font-size: 1.5rem;"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Products -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h5 class="mb-0 fw-bold">
+                            <i class="bi bi-star-fill text-warning me-2"></i>Top Selling Products
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        @if (salesReport.TopProducts.Any())
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Product</th>
+                                            <th class="text-end">Quantity Sold</th>
+                                            <th class="text-end">Revenue</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var product in salesReport.TopProducts)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <strong>@product.ProductName</strong>
+                                                </td>
+                                                <td class="text-end">
+                                                    <span class="badge bg-primary">@product.QuantitySold</span>
+                                                </td>
+                                                <td class="text-end">
+                                                    <strong class="text-success">₱@product.TotalRevenue.ToString("N2")</strong>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center py-4 text-muted">
+                                <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+                                <p class="mt-2">No sales data available for this period</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Methods -->
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h5 class="mb-0 fw-bold">
+                            <i class="bi bi-credit-card text-info me-2"></i>Payment Methods
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        @if (salesReport.SalesByPaymentMethod.Any())
+                        {
+                            @foreach (var payment in salesReport.SalesByPaymentMethod)
+                            {
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span class="fw-semibold">@payment.PaymentMethod</span>
+                                        <span class="text-muted">@payment.Percentage.ToString("N1")%</span>
+                                    </div>
+                                    <div class="progress" style="height: 8px;">
+                                        <div class="progress-bar bg-info" role="progressbar" style="width: @payment.Percentage%"></div>
+                                    </div>
+                                    <div class="d-flex justify-content-between mt-1">
+                                        <small class="text-muted">@payment.OrderCount orders</small>
+                                        <small class="text-success fw-semibold">₱@payment.TotalSales.ToString("N2")</small>
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="text-center py-3 text-muted">
+                                <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                                <p class="mt-2 mb-0">No payment data</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Daily Sales Chart -->
+        @if (salesReport.DailySales.Any())
+        {
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white border-0 py-3">
+                            <h5 class="mb-0 fw-bold">
+                                <i class="bi bi-bar-chart-line text-primary me-2"></i>Daily Sales Trend
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th class="text-end">Orders</th>
+                                            <th class="text-end">Sales</th>
+                                            <th width="40%">Chart</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @{
+                                            var maxSales = salesReport.DailySales.Max(d => d.TotalSales);
+                                        }
+                                        @foreach (var day in salesReport.DailySales.OrderByDescending(d => d.Date))
+                                        {
+                                            var barWidth = maxSales > 0 ? (day.TotalSales / maxSales * 100) : 0;
+                                            <tr>
+                                                <td>
+                                                    <strong>@day.Date.ToString("MMM dd, yyyy")</strong>
+                                                </td>
+                                                <td class="text-end">
+                                                    <span class="badge bg-secondary">@day.OrderCount</span>
+                                                </td>
+                                                <td class="text-end">
+                                                    <strong class="text-success">₱@day.TotalSales.ToString("N2")</strong>
+                                                </td>
+                                                <td>
+                                                    <div class="progress" style="height: 20px;">
+                                                        <div class="progress-bar bg-primary" role="progressbar" style="width: @barWidth%">
+                                                            @if (barWidth > 15)
+                                                            {
+                                                                <small>₱@day.TotalSales.ToString("N0")</small>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    else if (errorMessage != null)
+    {
+        <div class="alert alert-danger" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            @errorMessage
+        </div>
+    }
+</div>
+
+@code {
+    private SalesReportDto? salesReport;
+    private bool isLoading = false;
+    private string? errorMessage;
+    private string selectedPeriod = "month";
+    private DateTime? fromDate;
+    private DateTime? toDate;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPeriodSales("month");
+    }
+
+    private async Task LoadPeriodSales(string period)
+    {
+        selectedPeriod = period;
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            salesReport = period switch
+            {
+                "today" => await SalesTrackerService.GetTodaySalesAsync(),
+                "week" => await SalesTrackerService.GetWeekSalesAsync(),
+                "month" => await SalesTrackerService.GetMonthSalesAsync(),
+                "year" => await SalesTrackerService.GetYearSalesAsync(),
+                _ => await SalesTrackerService.GetMonthSalesAsync()
+            };
+            
+            Logger.LogInformation("Loaded {Period} sales report successfully", period);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading {Period} sales", period);
+            errorMessage = $"Failed to load sales data: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task LoadCustomDateSales()
+    {
+        if (fromDate == null || toDate == null)
+        {
+            errorMessage = "Please select both from and to dates";
+            return;
+        }
+
+        if (fromDate > toDate)
+        {
+            errorMessage = "From date cannot be after to date";
+            return;
+        }
+
+        selectedPeriod = "custom";
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            // Treat input dates as UTC (start of day for fromDate, end of day for toDate)
+            var fromDateUtc = DateTime.SpecifyKind(fromDate.Value.Date, DateTimeKind.Utc);
+            var toDateUtc = DateTime.SpecifyKind(toDate.Value.Date.AddDays(1).AddSeconds(-1), DateTimeKind.Utc);
+
+            salesReport = await SalesTrackerService.GetSalesReportAsync(fromDateUtc, toDateUtc);
+            
+            Logger.LogInformation("Loaded custom date range sales report successfully");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading custom date sales");
+            errorMessage = $"Failed to load sales data: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void NavigateToAdmin()
+    {
+        NavigationManager.NavigateTo("/admin");
+    }
+}
+

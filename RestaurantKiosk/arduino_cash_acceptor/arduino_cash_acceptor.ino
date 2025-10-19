@@ -1,8 +1,9 @@
 /*
- * Arduino Cash Acceptor Interface for Restaurant Kiosk
+ * Arduino Cash Acceptor & Receipt Printer Interface for Restaurant Kiosk
  * Compatible with Raspberry Pi Polling Architecture
  * 
  * Reads pulses from bill and coin acceptors and sends data to Raspberry Pi via serial
+ * Receives receipt print commands from Pi and prints to thermal printer
  * 
  * HARDWARE CONNECTIONS:
  * ====================
@@ -16,40 +17,57 @@
  *   - VCC -> 12V (from external power supply)
  *   - GND -> Common Ground
  * 
+ * Thermal Printer (Serial):
+ *   - TX (Arduino) -> RX (Printer) - Pin 10 (SoftwareSerial)
+ *   - RX (Arduino) -> TX (Printer) - Pin 11 (SoftwareSerial)
+ *   - VCC -> 5V or external power (check printer voltage!)
+ *   - GND -> Common Ground
+ * 
  * Raspberry Pi:
  *   - Arduino USB -> Raspberry Pi USB port
  *   - Communicates via serial at 9600 baud
  * 
- * PROTOCOL (NEW - No ORDER command needed!):
- * ==========================================
+ * PROTOCOL:
+ * =========
  * Arduino → Pi:
  *   "BILL:100"    - ₱100 bill accepted
  *   "BILL:500"    - ₱500 bill accepted
  *   "COIN:5"      - ₱5 coin accepted
  *   "COIN:10"     - ₱10 coin accepted
  *   "READY"       - System ready (sent on startup)
- *   "ERROR:xxx"   - Error message
+ *   "PRINT:OK"    - Receipt printed successfully
+ *   "PRINT:ERROR" - Receipt print failed
  * 
- * Pi → Arduino (optional commands):
- *   "PING"        - Health check (Arduino responds with "PONG")
- *   "STATUS"      - Request status (Arduino responds with current state)
+ * Pi → Arduino:
+ *   "PING"              - Health check (Arduino responds with "PONG")
+ *   "STATUS"            - Request status
+ *   "PRINT:START"       - Begin receipt print job
+ *   "PRINT:LINE:text"   - Print a line of text
+ *   "PRINT:END"         - Finish receipt and cut paper
  * 
- * Note: Order number is managed by Raspberry Pi (polls VPS for active sessions)
- * Arduino just detects cash and sends amounts - much simpler!
- * 
- * Version: 2.0 (Polling Architecture)
- * Date: 2025-01-15
+ * Version: 3.0 (With Receipt Printer Support)
+ * Date: 2025-01-19
  */
+
+// Include SoftwareSerial for thermal printer communication
+#include <SoftwareSerial.h>
 
 // ==================== PIN DEFINITIONS ====================
 const int BILL_ACCEPTOR_PIN = 2;  // Interrupt pin for bill acceptor (INT0)
 const int COIN_ACCEPTOR_PIN = 3;  // Interrupt pin for coin acceptor (INT1)
+const int PRINTER_RX_PIN = 10;    // Arduino TX -> Printer RX
+const int PRINTER_TX_PIN = 11;    // Arduino RX -> Printer TX
 const int LED_PIN = 13;            // Built-in LED for status indication
+
+// ==================== PRINTER SETUP ====================
+SoftwareSerial printerSerial(PRINTER_TX_PIN, PRINTER_RX_PIN); // RX, TX
+bool printerEnabled = true;        // Set to false to disable printer
+bool printJobActive = false;
 
 // ==================== DENOMINATION DEFINITIONS ====================
 // Philippine Peso Bill Denominations
-const int billValues[] = {20, 50, 100, 200, 500, 1000};
-const int NUM_BILL_DENOMINATIONS = 6;
+const int billValues[] = {10, 20, 50, 100, 200, 500, 1000};
+const int NUM_BILL_DENOMINATIONS = 7;
 
 // Philippine Peso Coin Denominations (in PHP)
 const int coinValues[] = {1, 5, 10, 20};  // ₱1, ₱5, ₱10, ₱20
@@ -93,6 +111,13 @@ void setup() {
     ; // Wait for serial port to connect (needed for some boards)
   }
   
+  // Initialize printer serial communication
+  if (printerEnabled) {
+    printerSerial.begin(9600);  // Most thermal printers use 9600 baud
+    delay(100);
+    initializePrinter();
+  }
+  
   // Configure pins
   pinMode(BILL_ACCEPTOR_PIN, INPUT_PULLUP);  // Use internal pull-up resistor
   pinMode(COIN_ACCEPTOR_PIN, INPUT_PULLUP);  // Use internal pull-up resistor
@@ -109,8 +134,8 @@ void setup() {
   
   // Send ready signal to Raspberry Pi
   Serial.println("READY");
-  Serial.println("# Arduino Cash Acceptor v2.0");
-  Serial.println("# Polling Architecture - No ORDER command needed");
+  Serial.println("# Arduino Cash Acceptor & Printer v3.0");
+  Serial.println("# Polling Architecture + Receipt Printing");
   Serial.println("# Raspberry Pi handles order management");
   
   lastHeartbeat = millis();
@@ -124,7 +149,11 @@ void loop() {
   if (Serial.available() > 0) {
     String command = Serial.readStringUntil('\n');
     command.trim();
-    handleCommand(command);
+    
+    // Only process non-empty commands
+    if (command.length() > 0) {
+      handleCommand(command);
+    }
   }
   
   // Process bill pulses if timeout has elapsed
@@ -187,7 +216,9 @@ void handleCommand(String command) {
     Serial.print("# Status: Bills=");
     Serial.print(totalBillsAccepted);
     Serial.print(" Coins=");
-    Serial.println(totalCoinsAccepted);
+    Serial.print(totalCoinsAccepted);
+    Serial.print(" Printer=");
+    Serial.println(printerEnabled ? "OK" : "DISABLED");
   }
   else if (command == "RESET") {
     // Reset counters
@@ -209,6 +240,23 @@ void handleCommand(String command) {
     Serial.println(amount);
     quickFlash(1);
   }
+  else if (command == "PRINT:START") {
+    // Start print job
+    handlePrintStart();
+  }
+  else if (command.startsWith("PRINT:LINE:")) {
+    // Print a line of text
+    String text = command.substring(11);
+    handlePrintLine(text);
+  }
+  else if (command == "PRINT:END") {
+    // End print job and cut paper
+    handlePrintEnd();
+  }
+  else if (command == "PRINT:TEST") {
+    // Test printer
+    testPrinter();
+  }
   else {
     // Unknown command
     Serial.print("# Unknown command: ");
@@ -222,13 +270,16 @@ void processBillPulses() {
     int billValue = 0;
     
     if (USE_PULSE_MAPPING) {
-      // Map pulse count to bill denomination
-      // Common mapping: 1 pulse = ₱20, 2 = ₱50, 3 = ₱100, 4 = ₱200, 5 = ₱500, 6+ = ₱1000
-      if (billPulseCount <= NUM_BILL_DENOMINATIONS) {
-        billValue = billValues[billPulseCount - 1];
-      } else {
-        // Unknown/invalid pulse count, default to largest denomination
-        billValue = billValues[NUM_BILL_DENOMINATIONS - 1];
+      // Custom pulse mapping logic for irregular pulse counts
+      if (billPulseCount == 1) billValue = 10;
+      else if (billPulseCount == 2) billValue = 20;
+      else if (billPulseCount == 5) billValue = 50;
+      else if (billPulseCount == 10) billValue = 100;
+      else if (billPulseCount == 20) billValue = 200;
+      else if (billPulseCount == 50) billValue = 500;  // special case
+      else if (billPulseCount == 100) billValue = 1000;
+      else {
+        billValue = 1000; // default to largest
         Serial.print("# Warning: Unexpected bill pulse count: ");
         Serial.println(billPulseCount);
       }
@@ -321,6 +372,153 @@ void sendHeartbeat() {
   Serial.print(totalBillsAccepted);
   Serial.print(" Coins:");
   Serial.println(totalCoinsAccepted);
+}
+
+// ==================== PRINTER FUNCTIONS ====================
+
+void initializePrinter() {
+  // Initialize thermal printer with ESC/POS commands
+  delay(500);  // Wait for printer to power up
+  
+  // ESC @ - Initialize printer
+  printerSerial.write(27);  // ESC
+  printerSerial.write(64);  // @
+  delay(100);
+  
+  Serial.println("# Printer initialized");
+}
+
+void handlePrintStart() {
+  // Start a new print job
+  if (!printerEnabled) {
+    Serial.println("PRINT:ERROR:DISABLED");
+    return;
+  }
+  
+  printJobActive = true;
+  
+  // Initialize printer for this job
+  printerSerial.write(27);  // ESC
+  printerSerial.write(64);  // @ - Initialize
+  delay(200);  // Longer delay for printer to fully initialize
+  
+  Serial.println("# Print job started");
+}
+
+void handlePrintLine(String text) {
+  // Print a line of text with slow, controlled output
+  if (!printerEnabled) {
+    Serial.println("# Print line ignored - printer disabled");
+    return;
+  }
+  
+  if (!printJobActive) {
+    Serial.println("# Print line ignored - no active job");
+    return;
+  }
+  
+  // Debug: show what we received
+  Serial.print("# Printing: ");
+  Serial.println(text);
+  
+  // Send text to printer one character at a time (pure ASCII only)
+  int charsSent = 0;
+  for (int i = 0; i < text.length(); i++) {
+    char c = text.charAt(i);
+    
+    // Only send printable ASCII characters (32-126)
+    if (c >= 32 && c <= 126) {
+      printerSerial.write(c);
+      charsSent++;
+      delayMicroseconds(500);  // Small delay between characters
+    } else if (c == '\n') {
+      printerSerial.write('\n');
+      charsSent++;
+      delay(10);  // Longer delay after newline to let printer advance paper
+    } else if (c == ' ') {
+      printerSerial.write(' ');
+      charsSent++;
+      delayMicroseconds(500);
+    }
+  }
+  
+  // Always add newline at end
+  printerSerial.write('\n');
+  delay(10);
+  
+  // Debug: confirm characters sent
+  Serial.print("# Sent ");
+  Serial.print(charsSent);
+  Serial.println(" chars to printer");
+  
+  delay(20);  // Additional delay after each line to let printer process
+}
+
+void handlePrintEnd() {
+  // End print job and cut paper
+  if (!printerEnabled || !printJobActive) {
+    Serial.println("PRINT:ERROR:NO_JOB");
+    return;
+  }
+  
+  // Feed more paper before cut to ensure footer is visible
+  for (int i = 0; i < 6; i++) {
+    printerSerial.write('\n');
+    delay(100);
+  }
+  
+  delay(300);  // Extra delay before cut
+  
+  // Cut paper - ESC i (full cut)
+  printerSerial.write(27);  // ESC
+  printerSerial.write(105); // i
+  delay(800);  // Longer wait for cut to complete
+  
+  printJobActive = false;
+  Serial.println("PRINT:OK");
+  
+  quickFlash(3);  // Visual feedback
+}
+
+void testPrinter() {
+  // Test printer with a simple receipt
+  if (!printerEnabled) {
+    Serial.println("PRINT:ERROR:DISABLED");
+    return;
+  }
+  
+  Serial.println("# Testing printer...");
+  
+  // Initialize
+  printerSerial.write(27);  // ESC
+  printerSerial.write(64);  // @ - Initialize
+  delay(100);
+  
+  // Print test text
+  printerSerial.println("================================");
+  printerSerial.println("  PRINTER TEST");
+  printerSerial.println("================================");
+  printerSerial.println();
+  printerSerial.println("Arduino Cash & Print System");
+  printerSerial.println("Version 3.0");
+  printerSerial.println();
+  printerSerial.println("If you can read this,");
+  printerSerial.println("the printer is working!");
+  printerSerial.println();
+  printerSerial.println("================================");
+  printerSerial.println();
+  
+  // Feed and cut
+  printerSerial.write('\n');
+  printerSerial.write('\n');
+  delay(200);
+  
+  printerSerial.write(27);  // ESC
+  printerSerial.write(105); // i - Cut
+  delay(500);
+  
+  Serial.println("PRINT:OK:TEST");
+  quickFlash(3);
 }
 
 // ==================== TESTING & DOCUMENTATION ====================
@@ -428,5 +626,6 @@ void sendHeartbeat() {
  * Compatible with: Polling Architecture (Raspberry Pi + VPS)
  * Last Updated: 2025-01-15
  */
+
 
 
