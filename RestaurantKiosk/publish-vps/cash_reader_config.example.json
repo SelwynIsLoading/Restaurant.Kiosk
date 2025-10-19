@@ -1,0 +1,53 @@
+{
+  "_comment": "Example configuration for arduino_cash_reader.py",
+  "_scenarios": {
+    "development": "Use localhost for local testing",
+    "raspberry_pi_standalone": "Pi runs both the app and cash reader on same device",
+    "vps_deployment": "App on cloud VPS, cash reader on home Pi (dynamic IP OK)"
+  },
+  
+  "vps_api_url": "http://localhost:5000",
+  "_vps_api_url_examples": {
+    "local_testing": "http://localhost:5000",
+    "pi_standalone": "http://localhost:5000",
+    "vps_production": "https://your-domain.com",
+    "vps_ip_only": "http://123.45.67.89:5000"
+  },
+  
+  "arduino_port": "/dev/ttyUSB0",
+  "_arduino_port_examples": {
+    "linux_pi_usb": "/dev/ttyUSB0",
+    "linux_pi_acm": "/dev/ttyACM0",
+    "windows": "COM3",
+    "find_on_linux": "Run: ls /dev/tty* | grep -E '(USB|ACM)'"
+  },
+  
+  "baud_rate": 9600,
+  "_baud_rate_note": "Must match Arduino code. Standard: 9600, 115200",
+  
+  "reconnect_delay_seconds": 5,
+  "_reconnect_delay_note": "Seconds to wait before reconnecting to Arduino",
+  
+  "connection_timeout_seconds": 10,
+  "_connection_timeout_note": "HTTP request timeout for VPS API calls",
+  
+  "retry_attempts": 3,
+  "_retry_attempts_note": "Number of retries for failed API requests",
+  
+  "api_key": null,
+  "_api_key_note": "Optional. Set in appsettings.json on VPS and here. Generate: openssl rand -base64 32",
+  "_api_key_examples": {
+    "disabled": null,
+    "enabled": "your-secure-32-character-random-key-here"
+  },
+  
+  "environment": "development",
+  "_environment_note": "Options: development, production",
+  
+  "logging": {
+    "log_file": "cash_reader.log",
+    "log_level": "INFO",
+    "_log_level_options": "DEBUG, INFO, WARNING, ERROR, CRITICAL"
+  }
+}
+

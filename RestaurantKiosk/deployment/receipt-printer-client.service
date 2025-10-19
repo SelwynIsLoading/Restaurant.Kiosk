@@ -1,0 +1,28 @@
+[Unit]
+Description=Restaurant Kiosk Receipt Printer Client (Polling Mode)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/RestaurantKiosk
+ExecStart=/usr/bin/python3 /home/pi/RestaurantKiosk/receipt_printer_client.py
+Restart=always
+RestartSec=10
+StandardOutput=append:/var/log/receipt-printer-client.log
+StandardError=append:/var/log/receipt-printer-client-error.log
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+
+# Resource limits
+LimitNOFILE=65536
+
+# Environment
+Environment="PYTHONUNBUFFERED=1"
+
+[Install]
+WantedBy=multi-user.target
+

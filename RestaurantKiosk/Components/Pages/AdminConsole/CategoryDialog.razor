@@ -1,0 +1,105 @@
+@using RestaurantKiosk.Data.Entities
+@using RestaurantKiosk.Data.Services
+@inject ICategoryService CategoryService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudContainer Style="max-width: 500px;">
+            <MudTextField @bind-Value="Category.Name"
+                         Label="Category Name"
+                         Required="true"
+                         RequiredError="Category name is required"
+                         MaxLength="100"
+                         Counter="100"
+                         Immediate="true" />
+
+            <MudTextField @bind-Value="Category.Description"
+                         Label="Description"
+                         Lines="3"
+                         MaxLength="500"
+                         Counter="500"
+                         Immediate="true" />
+
+            <MudNumericField @bind-Value="Category.DisplayOrder"
+                            Label="Display Order"
+                            Min="0"
+                            Step="1"
+                            HelpText="Lower numbers appear first" />
+
+            <MudSwitch T="bool" @bind-Checked="Category.IsActive"
+                       Label="Active"
+                       Color="Color.Primary"> </MudSwitch>
+        </MudContainer>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" 
+                   Variant="Variant.Filled" 
+                   OnClick="Save"
+                   Disabled="string.IsNullOrWhiteSpace(Category.Name)">
+            @(IsEditing ? "Update" : "Create")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+    
+    [Parameter] public Category Category { get; set; } = new();
+    [Parameter] public bool IsEditing { get; set; } = false;
+
+    private async Task Save()
+    {
+        try
+        {
+            bool success;
+            
+            if (IsEditing)
+            {
+                success = await CategoryService.UpdateCategoryAsync(Category);
+                if (success)
+                {
+                    Snackbar.Add("Category updated successfully!", Severity.Success);
+                }
+                else
+                {
+                    Snackbar.Add("Failed to update category. Please try again.", Severity.Error);
+                    return;
+                }
+            }
+            else
+            {
+                // Check if category already exists
+                var existingCategory = await CategoryService.GetCategoryByNameAsync(Category.Name);
+                if (existingCategory != null)
+                {
+                    Snackbar.Add("A category with this name already exists.", Severity.Warning);
+                    return;
+                }
+
+                success = await CategoryService.AddCategoryAsync(Category);
+                if (success)
+                {
+                    Snackbar.Add("Category created successfully!", Severity.Success);
+                }
+                else
+                {
+                    Snackbar.Add("Failed to create category. Please try again.", Severity.Error);
+                    return;
+                }
+            }
+
+            MudDialog.Close(DialogResult.Ok(Category));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"An error occurred: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+}

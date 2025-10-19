@@ -1,0 +1,605 @@
+﻿@page "/admin/inventory"
+@using RestaurantKiosk.Components.Layout
+@using RestaurantKiosk.Data.Entities
+@using RestaurantKiosk.Data.Services
+@using MudBlazor
+@layout AdminLayout
+
+@attribute [Authorize]
+
+@inject IProductService productService
+@inject ICategoryService categoryService
+@inject IDialogService DialogService
+@inject ISnackbar snackbar
+
+<div class="container-fluid">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="mb-0">
+                    <i class="fas fa-boxes text-primary me-2"></i>
+                    Inventory Management
+                </h2>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-primary btn-lg" @onclick="OpenCategoryModal">
+                        <i class="fas fa-tags me-2"></i>
+                        Manage Categories
+                    </button>
+                    <button class="btn btn-primary btn-lg" @onclick="OpenAddModal">
+                        <i class="fas fa-plus me-2"></i>
+                        Add New Product
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filter Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label for="searchInput" class="form-label">Search Products</label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                                <input type="text" class="form-control" id="searchInput" 
+                                       @bind="SearchProducts"
+                                       placeholder="Search by name, category, or description...">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="categoryFilter" class="form-label">Category</label>
+                            <select class="form-select" id="categoryFilter" @bind="SearchByCategory">
+                                <option value="">All Categories</option>
+                                @foreach (var category in availableCategories)
+                                {
+                                    <option value="@category">@category</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="statusFilter" class="form-label">Status</label>
+                            <select class="form-select" id="statusFilter" @bind="SearchProducts">
+                                <option value="">All Status</option>
+                                <option value="In Stock">In Stock</option>
+                                <option value="Low Stock">Low Stock</option>
+                                <option value="Out of Stock">Out of Stock</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button class="btn btn-outline-secondary w-100" @onclick="ClearFilters">
+                                <i class="fas fa-times me-1"></i>
+                                Clear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Products Grid -->
+    <div class="row">
+        @if (filteredProducts.Any())
+        {
+            @foreach (var product in filteredProducts)
+            {
+                <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+                    <div class="card h-100 product-card shadow-sm">
+                        @if (!string.IsNullOrEmpty(product.ImageUrl))
+                        {
+                            <div class="card-img-top" style="height: 200px; overflow: hidden; background: #f8f9fa;">
+                                <img src="@product.ImageUrl" alt="@product.Name" style="width: 100%; height: 100%; object-fit: cover;" />
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="card-img-top d-flex align-items-center justify-content-center" style="height: 200px; background: #f8f9fa;">
+                                <i class="fas fa-image fa-3x text-muted"></i>
+                            </div>
+                        }
+                        <div class="card-header border-0 bg-white pb-0">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <h6 class="card-title text-truncate mb-1" title="@product.Name">@product.Name</h6>
+                                <div class="dropdown">
+                                    @* <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" @onclick="() => OpenEditModal(product)"><i class="fas fa-edit me-2"></i>Edit</a></li>
+                                        <li><a class="dropdown-item text-danger" @onclick="() => DeleteProduct(product.Id)"><i class="fas fa-trash me-2"></i>Delete</a></li>
+                                    </ul> *@
+
+                                    <MudMenu Icon="@Icons.Material.Filled.ArrowDropDown" Style="align-self: auto;">
+                                        <MudMenuItem @onclick="() => OpenEditModal(product)"><i class="fas fa-edit me-2"></i>Edit</MudMenuItem>
+                                        <MudMenuItem @onclick="() => DeleteProduct(product.Id)"><i class="fas fa-trash me-2"></i>Delete</MudMenuItem>
+
+                                    </MudMenu>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-1">
+                                <span class="badge bg-secondary">@product.Category</span>
+                                @if (product.IsActive)
+                                {
+                                    <span class="badge bg-success">Active</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">Inactive</span>
+                                }
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text text-muted small mb-3">@product.Description</p>
+
+                            <!-- Price Section -->
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Price</label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text">$</span>
+                                    @if (editingPriceId == product.Id)
+                                    {
+                                        <input type="number" class="form-control" @bind="editingPrice" step="0.01" min="0" />
+                                        <button class="btn btn-success btn-sm" @onclick="() => SavePrice(product.Id)">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                        <button class="btn btn-secondary btn-sm" @onclick="CancelPriceEdit">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <input type="text" class="form-control" value="@product.Price.ToString("C")" readonly />
+                                        <button class="btn btn-outline-primary btn-sm" @onclick="() => StartPriceEdit(product.Id, product.Price)">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+
+                            <!-- Quantity Section -->
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Quantity</label>
+                                <div class="input-group input-group-sm">
+                                    @if (editingQuantityId == product.Id)
+                                    {
+                                        <input type="number" class="form-control" @bind="editingQuantity" min="0" />
+                                        <button class="btn btn-success btn-sm" @onclick="() => SaveQuantity(product.Id)">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                        <button class="btn btn-secondary btn-sm" @onclick="CancelQuantityEdit">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <input type="text" class="form-control" value="@product.Quantity" readonly />
+                                        <button class="btn btn-outline-primary btn-sm" @onclick="() => StartQuantityEdit(product.Id, product.Quantity)">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+
+                            <!-- IsActive Section -->
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Active Status</label>
+                                <div class="input-group input-group-sm">
+                                    @if (editingIsActiveId == product.Id)
+                                    {
+                                        <select class="form-select" @bind="editingIsActive">
+                                            <option value="true">Active</option>
+                                            <option value="false">Inactive</option>
+                                        </select>
+                                        <button class="btn btn-success btn-sm" @onclick="() => SaveIsActive(product.Id)">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                        <button class="btn btn-secondary btn-sm" @onclick="CancelIsActiveEdit">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <input type="text" class="form-control" value="@(product.IsActive ? "Active" : "Inactive")" readonly />
+                                        <button class="btn btn-outline-primary btn-sm" @onclick="() => StartIsActiveEdit(product.Id, product.IsActive)">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+
+                            <!-- Status Badge -->
+                            <div class="text-center">
+                                @if (product.Quantity > 10)
+                                {
+                                    <span class="badge bg-success">In Stock</span>
+                                }
+                                else if (product.Quantity > 0)
+                                {
+                                    <span class="badge bg-warning">Low Stock</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">Out of Stock</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="col-12">
+                <div class="py-5 text-center">
+                    <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">No products found</h4>
+                    <p class="text-muted">@(products.Any() ? "Try adjusting your search filters" : "Add your first product to get started")</p>
+                    @if (!products.Any())
+                    {
+                        <button class="btn btn-primary" @onclick="OpenAddModal">
+                            <i class="fas fa-plus me-2"></i>
+                            Add First Product
+                        </button>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+
+@code {
+
+
+
+    // State variables
+    private List<Products> products = new();
+    private List<Products> filteredProducts = new();
+    private List<string> availableCategories = new();
+    private string searchTerm = string.Empty;
+    private string selectedCategory = string.Empty;
+    private string selectedStatus = string.Empty;
+
+    // Inline editing state
+    private int? editingPriceId = null;
+    private int? editingQuantityId = null;
+    private int? editingIsActiveId = null;
+    private decimal editingPrice;
+    private int editingQuantity;
+    private bool editingIsActive;
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProductsAsync();
+        await LoadCategoriesAsync();
+        FilterProducts();
+    }
+
+    private async Task LoadProductsAsync()
+    {
+        products = await productService.GetAllProductsAsync();
+        FilterProducts();
+    }
+
+    private async Task LoadCategoriesAsync()
+    {
+        // First try to get categories from the Category table
+        var categoryNames = await categoryService.GetCategoryNamesAsync();
+        
+        if (categoryNames.Any())
+        {
+            availableCategories = categoryNames;
+        }
+        else
+        {
+            // Fallback to getting unique categories from products
+            availableCategories = await productService.GetUniqueCategoriesAsync();
+        }
+    }
+
+    private void FilterProducts()
+    {
+        filteredProducts = products.Where(p =>
+            (string.IsNullOrEmpty(searchTerm) || 
+             p.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+             p.Description.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+             p.Category.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)) &&
+            (string.IsNullOrEmpty(selectedCategory) || p.Category == selectedCategory) &&
+            (string.IsNullOrEmpty(selectedStatus) || GetProductStatus(p) == selectedStatus)
+        ).ToList();
+        StateHasChanged();
+    }
+
+    private string SearchProducts
+    {
+        get => searchTerm;
+        set
+        {
+            searchTerm = value;
+            filteredProducts = products.Where(p => (string.IsNullOrEmpty(value) || 
+                                                    p.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) || 
+                                                    p.Description.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) || 
+                                                    p.Category.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)) && (string.IsNullOrEmpty(selectedCategory) || p.Category == selectedCategory) && (string.IsNullOrEmpty(selectedStatus) || GetProductStatus(p) == selectedStatus)).ToList();
+            StateHasChanged();
+        }
+    }
+
+    private string SearchByCategory
+    {
+        get => selectedCategory;
+        set
+        {
+            selectedCategory = value;
+            filteredProducts = products.Where(p => (string.IsNullOrEmpty(value) ||
+                                                    p.Category == value)).ToList();
+        }
+    }
+
+    private string GetProductStatus(Products product)
+    {
+        if (product.Quantity > 10) return "In Stock";
+        if (product.Quantity > 0) return "Low Stock";
+        return "Out of Stock";
+    }
+
+    private void ClearFilters()
+    {
+        searchTerm = string.Empty;
+        selectedCategory = string.Empty;
+        selectedStatus = string.Empty;
+        FilterProducts();
+    }
+
+    private async Task OpenCategoryModal()
+    {
+        var category = new Category();
+        var parameters = new DialogParameters<CategoryDialog>
+        {
+            { x => x.Category, category },
+            { x => x.IsEditing, false }
+        };
+
+        var options = new DialogOptions()
+        {
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true,
+            CloseButton = true,
+            BackdropClick = true
+        };
+
+        var dialog = await DialogService.ShowAsync<CategoryDialog>("Add New Category", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled && result.Data is Category savedCategory)
+        {
+            // Reload categories to include the new one
+            await LoadCategoriesAsync();
+            snackbar.Add("Category added successfully!", Severity.Success);
+        }
+    }
+
+    private async Task OpenAddModal()
+    {
+        var product = new Products();
+        var parameters = new DialogParameters<ProductDialog>
+        {
+            { x => x.Product, product },
+            { x => x.IsEditing, false }
+        };
+
+        var options = new DialogOptions()
+        {
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true,
+            CloseButton = true,
+            BackdropClick = true
+        };
+
+        var dialog = await DialogService.ShowAsync<ProductDialog>("Add New Product", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled && result.Data is Products savedProduct)
+        {
+            await SaveProduct(savedProduct, false);
+        }
+    }
+
+    private async Task OpenEditModal(Products product)
+    {
+        var productCopy = new Products
+        {
+            Id = product.Id,
+            Name = product.Name,
+            Description = product.Description,
+            Category = product.Category,
+            Price = product.Price,
+            Quantity = product.Quantity,
+            ImageUrl = product.ImageUrl,
+            IsActive = product.IsActive
+        };
+
+        var parameters = new DialogParameters<ProductDialog>
+        {
+            { x => x.Product, productCopy },
+            { x => x.IsEditing, true }
+        };
+
+        var options = new DialogOptions()
+        {
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true,
+            CloseButton = true,
+            BackdropClick = true
+        };
+
+        var dialog = await DialogService.ShowAsync<ProductDialog>("Edit Product", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled && result.Data is Products savedProduct)
+        {
+            await SaveProduct(savedProduct, true);
+        }
+    }
+
+    private async Task SaveProduct(Products product, bool isEditing)
+    {
+        if (isEditing)
+        {
+            var existingProduct = products.FirstOrDefault(p => p.Id == product.Id);
+            if (existingProduct != null)
+            {
+                existingProduct.Name = product.Name;
+                existingProduct.Description = product.Description;
+                existingProduct.Category = product.Category;
+                existingProduct.Price = product.Price;
+                existingProduct.Quantity = product.Quantity;
+                existingProduct.ImageUrl = product.ImageUrl;
+                existingProduct.IsActive = product.IsActive;
+
+
+
+                if (await productService.UpdateProductAsync(existingProduct))
+                {
+					snackbar.Add("Product has been successfully updated!", Severity.Success);
+                }
+
+            }
+        }
+        else
+        {
+            products.Add(product);
+
+            var isSuccess = await productService.AddProductAsync(product);
+            if (!isSuccess)
+            {
+                snackbar.Add("There's an error in saving product.", Severity.Error);
+            }
+            else
+            {
+                snackbar.Add("Product has been successfully saved!", Severity.Success);
+                // Reload categories in case a new category was added
+                await LoadCategoriesAsync();
+            }
+        }
+
+        FilterProducts();
+    }
+
+    private async Task DeleteProduct(int productId)
+    {
+        var product = products.FirstOrDefault(p => p.Id == productId);
+        if (product != null)
+        {
+            products.Remove(product);
+            try
+            {
+                var result = await productService.DeleteProductAsync(productId);
+                if (result)
+                {
+                    snackbar.Add("Product has been deleted successfully", Severity.Success);
+                }
+            }
+            catch (Exception ex)
+            {
+                snackbar.Add("There's an error in deleting the product", Severity.Error);
+            }
+            FilterProducts();
+        }
+    }
+
+    private void StartPriceEdit(int productId, decimal currentPrice)
+    {
+        editingPriceId = productId;
+        editingPrice = currentPrice;
+    }
+
+    private async Task SavePrice(int productId)
+    {
+        var product = products.FirstOrDefault(p => p.Id == productId);
+        if (product != null && editingPrice >= 0)
+        {
+            product.Price = editingPrice;
+
+            var result = await productService.UpdateProductAsync(product);
+            if (result)
+            {
+	            snackbar.Add("Price has been updated successfully", Severity.Success);
+            }
+            else
+            {
+	            snackbar.Add("There's an error in updating", Severity.Error);
+            }
+            editingPriceId = null;
+            StateHasChanged();
+        }
+    }
+
+    private void CancelPriceEdit()
+    {
+        editingPriceId = null;
+    }
+
+    private void StartQuantityEdit(int productId, int currentQuantity)
+    {
+        editingQuantityId = productId;
+        editingQuantity = currentQuantity;
+    }
+
+    private void SaveQuantity(int productId)
+    {
+        var product = products.FirstOrDefault(p => p.Id == productId);
+        if (product != null && editingQuantity >= 0)
+        {
+            product.Quantity = editingQuantity;
+            editingQuantityId = null;
+            productService.UpdateProductAsync(product);
+            snackbar.Add("Quantity has been updated successfully", Severity.Success);
+            FilterProducts();
+        }
+    }
+
+    private void CancelQuantityEdit()
+    {
+        editingQuantityId = null;
+    }
+
+    private void StartIsActiveEdit(int productId, bool currentIsActive)
+    {
+        editingIsActiveId = productId;
+        editingIsActive = currentIsActive;
+    }
+
+    private async Task SaveIsActive(int productId)
+    {
+        var product = products.FirstOrDefault(p => p.Id == productId);
+        if (product != null)
+        {
+            product.IsActive = editingIsActive;
+
+            var result = await productService.UpdateProductAsync(product);
+            if (result)
+            {
+                snackbar.Add("Active status has been updated successfully", Severity.Success);
+            }
+            else
+            {
+                snackbar.Add("There's an error in updating", Severity.Error);
+            }
+            editingIsActiveId = null;
+            StateHasChanged();
+        }
+    }
+
+    private void CancelIsActiveEdit()
+    {
+        editingIsActiveId = null;
+    }
+}

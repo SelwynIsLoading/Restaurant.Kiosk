@@ -1,0 +1,24 @@
+[Unit]
+Description=Restaurant Kiosk Receipt Printer Service
+After=network.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/RestaurantKiosk
+ExecStart=/usr/bin/python3 /home/pi/RestaurantKiosk/receipt_printer.py
+Restart=always
+RestartSec=10
+StandardOutput=append:/var/log/receipt-printer.log
+StandardError=append:/var/log/receipt-printer-error.log
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+
+# Resource limits
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
+

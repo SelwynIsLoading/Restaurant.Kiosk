@@ -1,0 +1,161 @@
+﻿@page "/"
+
+<PageTitle>Restaurant Kiosk System</PageTitle>
+
+<div class="home-container">
+    <!-- Hero Section -->
+    <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="py-5">
+        <MudGrid Spacing="4" Class="align-items-center">
+            <MudItem xs="12" md="6">
+                <MudPaper Elevation="0" Class="pa-4 transparent">
+                    <MudText Typo="Typo.h2" Color="Color.Primary" Class="fw-bold mb-4">
+                        Welcome to Our Restaurant Kiosk System
+                    </MudText>
+                    <MudText Typo="Typo.body1" Class="mb-5" Style="font-size: 1.125rem; line-height: 1.75;">
+                        Experience the future of dining with our interactive kiosk ordering system. 
+                        Browse our menu, customize your order, and pay seamlessly - all from the comfort of your table.
+                    </MudText>
+                    <MudStack Row="true" Spacing="3">
+                        <MudButton Variant="Variant.Filled" 
+                                  Color="Color.Primary" 
+                                  Size="Size.Large"
+                                  Href="/kiosk"
+                                  StartIcon="@Icons.Material.Filled.Restaurant"
+                                  Class="px-6 py-3">
+                            Start Ordering
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" 
+                                  Color="Color.Primary" 
+                                  Size="Size.Large"
+                                  Href="/admin"
+                                  StartIcon="@Icons.Material.Filled.AdminPanelSettings"
+                                  Class="px-6 py-3">
+                            Admin Console
+                        </MudButton>
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" md="6" Class="text-center">
+                <MudImage Src="/imgs/logo.png" Alt="Restaurant Logo" Elevation="0" Class="rounded-lg" Style="max-width: 400px; width: 100%;" />
+            </MudItem>
+        </MudGrid>
+    </MudContainer>
+
+    <!-- Features Section -->
+    <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="py-5 mt-5">
+        <MudText Typo="Typo.h3" Align="Align.Center" Color="Color.Primary" Class="fw-bold mb-5">
+            Why Choose Our Kiosk System?
+        </MudText>
+        <MudGrid Spacing="4">
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard Elevation="3" Class="h-100">
+                    <MudCardContent Class="text-center pa-5">
+                        <MudIcon Icon="@Icons.Material.Filled.TouchApp" Size="Size.Large" Color="Color.Primary" Class="mb-3" />
+                        <MudText Typo="Typo.h6" Class="fw-bold mb-3">Touch-Friendly Interface</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Dark">
+                            Designed specifically for touch screens with large, easy-to-tap buttons and intuitive navigation.
+                        </MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard Elevation="3" Class="h-100">
+                    <MudCardContent Class="text-center pa-5">
+                        <MudIcon Icon="@Icons.Material.Filled.Speed" Size="Size.Large" Color="Color.Success" Class="mb-3" />
+                        <MudText Typo="Typo.h6" Class="fw-bold mb-3">Fast & Efficient</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Dark">
+                            Order in minutes with our streamlined interface. No waiting for servers - place your order instantly.
+                        </MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard Elevation="3" Class="h-100">
+                    <MudCardContent Class="text-center pa-5">
+                        <MudIcon Icon="@Icons.Material.Filled.DashboardCustomize" Size="Size.Large" Color="Color.Warning" Class="mb-3" />
+                        <MudText Typo="Typo.h6" Class="fw-bold mb-3">Customizable Orders</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Dark">
+                            Easily modify your order, add special instructions, and see real-time pricing updates.
+                        </MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard Elevation="3" Class="h-100">
+                    <MudCardContent Class="text-center pa-5">
+                        <MudIcon Icon="@Icons.Material.Filled.Payment" Size="Size.Large" Color="Color.Info" Class="mb-3" />
+                        <MudText Typo="Typo.h6" Class="fw-bold mb-3">Multiple Payment Options</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Dark">
+                            Pay with cash (₱), card, or mobile payment. Secure and convenient payment processing in Philippine Peso.
+                        </MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    </MudContainer>
+
+    <!-- How It Works Section -->
+    <MudContainer MaxWidth="MaxWidth.Large" Class="py-5 my-5">
+        <MudText Typo="Typo.h3" Align="Align.Center" Color="Color.Primary" Class="fw-bold mb-5">
+            How It Works
+        </MudText>
+        <MudTimeline TimelineOrientation="TimelineOrientation.Horizontal" TimelinePosition="TimelinePosition.Top">
+            <MudTimelineItem Color="Color.Primary" Size="Size.Large">
+                <ItemOpposite>
+                    <MudText Color="Color.Primary" Typo="Typo.h5" Class="fw-bold">1</MudText>
+                </ItemOpposite>
+                <ItemContent>
+                    <MudText Typo="Typo.h6" Class="fw-bold mb-2">Browse Menu</MudText>
+                    <MudText Typo="Typo.body2">Explore our delicious menu organized by categories. View detailed descriptions and prices.</MudText>
+                </ItemContent>
+            </MudTimelineItem>
+            <MudTimelineItem Color="Color.Success" Size="Size.Large">
+                <ItemOpposite>
+                    <MudText Color="Color.Success" Typo="Typo.h5" Class="fw-bold">2</MudText>
+                </ItemOpposite>
+                <ItemContent>
+                    <MudText Typo="Typo.h6" Class="fw-bold mb-2">Add to Cart</MudText>
+                    <MudText Typo="Typo.body2">Select your items and add them to your cart. Modify quantities as needed.</MudText>
+                </ItemContent>
+            </MudTimelineItem>
+            <MudTimelineItem Color="Color.Warning" Size="Size.Large">
+                <ItemOpposite>
+                    <MudText Color="Color.Warning" Typo="Typo.h5" Class="fw-bold">3</MudText>
+                </ItemOpposite>
+                <ItemContent>
+                    <MudText Typo="Typo.h6" Class="fw-bold mb-2">Checkout</MudText>
+                    <MudText Typo="Typo.body2">Review your order, provide your information, and choose your payment method.</MudText>
+                </ItemContent>
+            </MudTimelineItem>
+            <MudTimelineItem Color="Color.Info" Size="Size.Large">
+                <ItemOpposite>
+                    <MudText Color="Color.Info" Typo="Typo.h5" Class="fw-bold">4</MudText>
+                </ItemOpposite>
+                <ItemContent>
+                    <MudText Typo="Typo.h6" Class="fw-bold mb-2">Enjoy</MudText>
+                    <MudText Typo="Typo.body2">Your order is sent to the kitchen. Sit back and relax while we prepare your meal!</MudText>
+                </ItemContent>
+            </MudTimelineItem>
+        </MudTimeline>
+    </MudContainer>
+
+    <!-- Call to Action -->
+    <MudContainer MaxWidth="MaxWidth.Medium" Class="py-5 mb-5">
+        <MudPaper Elevation="4" Class="pa-8 text-center" >
+            <MudText Typo="Typo.h4" Color="Color.Surface" Class="fw-bold mb-3">
+                Ready to Order?
+            </MudText>
+            <MudText Typo="Typo.body1" Color="Color.Surface" Class="mb-4">
+                Start your culinary journey with us today!
+            </MudText>
+            <MudButton Variant="Variant.Filled" 
+                      Color="Color.Surface" 
+                      Size="Size.Large"
+                      Href="/kiosk"
+                      StartIcon="@Icons.Material.Filled.Restaurant"
+                      Class="px-8 py-3">
+                Get Started Now
+            </MudButton>
+        </MudPaper>
+    </MudContainer>
+</div>

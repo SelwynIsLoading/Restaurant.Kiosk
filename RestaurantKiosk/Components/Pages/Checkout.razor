@@ -1,0 +1,544 @@
+@page "/checkout"
+@layout KioskLayout
+@using System.ComponentModel.DataAnnotations
+@using RestaurantKiosk.Components.Layout
+@using RestaurantKiosk.Data.Entities
+@using RestaurantKiosk.Data.Services
+@using System.Text.Json
+@inject IOrderService OrderService
+@inject IOrderRepository OrderRepository
+@inject IPaymentService PaymentService
+@inject IProductService ProductService
+@inject ICurrencyService CurrencyService
+@inject ISnackbar Snackbar
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+@attribute [StreamRendering]
+
+<PageTitle>Checkout - Restaurant Kiosk</PageTitle>
+
+<div class="checkout-container">
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="pa-6" Style="position: relative; z-index: 1;">
+    <!-- Header -->
+    <MudPaper Elevation="8" Class="pa-5 mb-5" Style="background: linear-gradient(135deg, #FFFFFF 0%, #FFF8F0 100%); border-radius: 20px; border: 2px solid #FFE0B2;">
+        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="4">
+                <MudAvatar Size="Size.Large" Style="width: 80px; height: 80px; background: linear-gradient(135deg, #FF6F00, #FF9800); box-shadow: 0 8px 24px rgba(255, 111, 0, 0.3);">
+                    <MudImage Src="/imgs/logo.png" Alt="Restaurant Logo" Style="width: 100%; height: 100%; object-fit: cover;" />
+                </MudAvatar>
+                <div>
+                    <MudText Typo="Typo.h3" Style="font-weight: 800; background: linear-gradient(135deg, #FF6F00, #FF9800); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                        Complete Your Order
+                    </MudText>
+                    <MudText Typo="Typo.body1" Color="Color.Secondary" Style="margin-top: 4px;">
+                        Just a few more steps to delicious food
+                    </MudText>
+                </div>
+            </MudStack>
+            <MudButton Variant="Variant.Outlined" 
+                      Color="Color.Primary"
+                      Size="Size.Large"
+                      OnClick="GoBackToKiosk"
+                      StartIcon="@Icons.Material.Filled.ArrowBack"
+                      Style="border-radius: 50px; padding: 14px 28px; font-weight: 700; border-width: 2px;">
+                Back to Menu
+            </MudButton>
+        </MudStack>
+    </MudPaper>
+
+    <MudGrid Spacing="5">
+        <!-- Order Summary -->
+        <MudItem xs="12" md="5">
+            <MudPaper Elevation="8" Class="pa-5" Style="border-radius: 20px; background: linear-gradient(to bottom, #FFFFFF 0%, #FFF8F0 100%); border: 2px solid #FFE0B2;">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-4">
+                    <MudIcon Icon="@Icons.Material.Filled.Receipt" Color="Color.Primary" Size="Size.Large" />
+                    <MudText Typo="Typo.h5" Style="font-weight: 800; background: linear-gradient(135deg, #FF6F00, #FF9800); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                        Order Summary
+                    </MudText>
+                </MudStack>
+                
+                <MudStack Spacing="3" Class="mb-4">
+                    @if (OrderService.HasItems())
+                    {
+                        @foreach (var item in OrderService.GetCartItems())
+                        {
+                            <MudPaper Elevation="4" Class="pa-4" Style="border-radius: 16px; border: 2px solid #FFE0B2; background: white;">
+                                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Start">
+                                    <MudStack Spacing="1" Class="flex-grow-1">
+                                        <MudText Typo="Typo.subtitle1" Style="font-weight: 700; color: #212121;">@item.Product.Name</MudText>
+                                        <MudText Typo="Typo.body2" Color="Color.Secondary">@item.Product.Description</MudText>
+                                        <MudChip T="string" 
+                                                Size="Size.Small" 
+                                                Color="Color.Primary" 
+                                                Style="margin-top: 8px; font-weight: 600;">
+                                            Qty: @item.Quantity × @CurrencyService.FormatPeso(item.Product.Price)
+                                        </MudChip>
+                                    </MudStack>
+                                    <MudText Typo="Typo.h6" Style="font-weight: 800; background: linear-gradient(135deg, #FF6F00, #FF9800); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                                        @CurrencyService.FormatPeso(item.Product.Price * item.Quantity)
+                                    </MudText>
+                                </MudStack>
+                            </MudPaper>
+                        }
+                    }
+                </MudStack>
+                
+                <MudDivider Class="my-4" Style="border-color: #FFE0B2;" />
+                
+                <MudPaper Elevation="2" Class="pa-4" Style="background: #FFF8F0; border-radius: 12px; border: 1px solid #FFE0B2;">
+                    <MudStack Spacing="3">
+                        <MudStack Row="true" Justify="Justify.SpaceBetween">
+                            <MudText Typo="Typo.body1" Style="font-weight: 600;">Subtotal:</MudText>
+                            <MudText Typo="Typo.body1" Style="font-weight: 700; color: #212121;">@CurrencyService.FormatPeso(GetSubtotal())</MudText>
+                        </MudStack>
+                        <MudStack Row="true" Justify="Justify.SpaceBetween">
+                            <MudText Typo="Typo.body1" Style="font-weight: 600;">VAT (12%):</MudText>
+                            <MudText Typo="Typo.body1" Style="font-weight: 700; color: #212121;">@CurrencyService.FormatPeso(GetTax())</MudText>
+                        </MudStack>
+                        <MudDivider Style="border-color: #FFCC80;" />
+                        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                            <MudText Typo="Typo.h6" Style="font-weight: 700; color: #212121;">Total:</MudText>
+                            <MudText Typo="Typo.h4" Style="font-weight: 800; background: linear-gradient(135deg, #FF6F00, #FF9800); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                                @CurrencyService.FormatPeso(GetTotal())
+                            </MudText>
+                        </MudStack>
+                    </MudStack>
+                </MudPaper>
+            </MudPaper>
+        </MudItem>
+
+        <!-- Customer Information & Payment -->
+        <MudItem xs="12" md="7">
+            <MudPaper Elevation="8" Class="pa-5" Style="border-radius: 20px; background: linear-gradient(to bottom, #FFFFFF 0%, #FFF8F0 100%); border: 2px solid #FFE0B2;">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-4">
+                    <MudIcon Icon="@Icons.Material.Filled.Person" Color="Color.Primary" Size="Size.Large" />
+                    <MudText Typo="Typo.h5" Style="font-weight: 800; background: linear-gradient(135deg, #FF6F00, #FF9800); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                        Customer Information
+                    </MudText>
+                </MudStack>
+                
+                <MudForm @ref="form" @bind-IsValid="@isFormValid" @bind-Errors="@errors">
+                    <MudStack Spacing="3">
+                        <MudTextField @bind-Value="CustomerName"
+                                     Label="Full Name"
+                                     Required="true"
+                                     RequiredError="Name is required"
+                                     Variant="Variant.Outlined"
+                                     Adornment="Adornment.Start"
+                                     AdornmentIcon="@Icons.Material.Filled.Person" />
+                        
+                        <MudTextField @bind-Value="CustomerEmail"
+                                     Label="Email Address"
+                                     Required="true"
+                                     RequiredError="Email is required"
+                                     Validation="@(new EmailAddressAttribute() {ErrorMessage = "Please enter a valid email address"})"
+                                     Variant="Variant.Outlined"
+                                     Adornment="Adornment.Start"
+                                     AdornmentIcon="@Icons.Material.Filled.Email"
+                                     InputType="InputType.Email" />
+                        
+                        <MudTextField @bind-Value="CustomerPhone"
+                                     Label="Phone Number"
+                                     Required="true"
+                                     RequiredError="Phone number is required"
+                                     HelperText="Enter your mobile number (e.g., 09123456789 or +639123456789)"
+                                     Variant="Variant.Outlined"
+                                     Adornment="Adornment.Start"
+                                     AdornmentIcon="@Icons.Material.Filled.Phone" />
+                        
+                        <MudSelect @bind-Value="OrderType"
+                                  Label="Order Type"
+                                  Variant="Variant.Outlined"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.DeliveryDining">
+                            <MudSelectItem Value="@("Dine In")">Dine In</MudSelectItem>
+                            <MudSelectItem Value="@("Takeout")">Takeout</MudSelectItem>
+                            <MudSelectItem Value="@("Delivery")">Delivery</MudSelectItem>
+                        </MudSelect>
+                        
+                        @if (OrderType == "Delivery")
+                        {
+                            <MudTextField @bind-Value="DeliveryAddress"
+                                         Label="Delivery Address"
+                                         Required="true"
+                                         RequiredError="Delivery address is required"
+                                         Variant="Variant.Outlined"
+                                         Lines="3"
+                                         Adornment="Adornment.Start"
+                                         AdornmentIcon="@Icons.Material.Filled.LocationOn" />
+                        }
+                        
+                        <MudTextField @bind-Value="SpecialInstructions"
+                                     Label="Special Instructions (Optional)"
+                                     Variant="Variant.Outlined"
+                                     Lines="3"
+                                     Adornment="Adornment.Start"
+                                     AdornmentIcon="@Icons.Material.Filled.Notes" />
+                    </MudStack>
+                </MudForm>
+
+                
+                <MudDivider Class="my-5" Style="border-color: #FFE0B2;" />
+                
+                <!-- Payment Method Selection -->
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-4">
+                    <MudIcon Icon="@Icons.Material.Filled.Payment" Color="Color.Primary" Size="Size.Large" />
+                    <MudText Typo="Typo.h6" Style="font-weight: 700; background: linear-gradient(135deg, #FF6F00, #FF9800); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                        Choose Payment Method
+                    </MudText>
+                </MudStack>
+                
+                <MudGrid Spacing="3" Class="mb-4">
+                    <MudItem xs="6" sm="3">
+                        <MudPaper Elevation="@(PaymentMethod == "Cash" ? 8 : 2)" 
+                                 Class="pa-4 cursor-pointer text-center payment-method-card"
+                                 Style="@(PaymentMethod == "Cash" ? "border: 3px solid #FF6F00; background: linear-gradient(135deg, #FFF8F0, #FFE0B2); border-radius: 16px; transform: scale(1.05);" : "border: 2px solid #E0E0E0; border-radius: 16px; background: white;")"
+                                 @onclick="@(() => PaymentMethod = "Cash")">
+                            <MudIcon Icon="@Icons.Material.Filled.AttachMoney" 
+                                    Color="@(PaymentMethod == "Cash" ? Color.Primary : Color.Default)" 
+                                    Style="font-size: 3rem;" />
+                            <MudText Typo="Typo.body1" Class="mt-2" Style="@(PaymentMethod == "Cash" ? "font-weight: 700; color: #FF6F00;" : "font-weight: 600;")">Cash</MudText>
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="6" sm="3">
+                        <MudPaper Elevation="@(PaymentMethod == "GCash" ? 8 : 2)" 
+                                 Class="pa-4 cursor-pointer text-center payment-method-card"
+                                 Style="@(PaymentMethod == "GCash" ? "border: 3px solid #FF6F00; background: linear-gradient(135deg, #FFF8F0, #FFE0B2); border-radius: 16px; transform: scale(1.05);" : "border: 2px solid #E0E0E0; border-radius: 16px; background: white;")"
+                                 @onclick="@(() => PaymentMethod = "GCash")">
+                            <MudIcon Icon="@Icons.Material.Filled.PhoneAndroid" 
+                                    Color="@(PaymentMethod == "GCash" ? Color.Primary : Color.Default)" 
+                                    Style="font-size: 3rem;" />
+                            <MudText Typo="Typo.body1" Class="mt-2" Style="@(PaymentMethod == "GCash" ? "font-weight: 700; color: #FF6F00;" : "font-weight: 600;")">GCash</MudText>
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="6" sm="3">
+                        <MudPaper Elevation="@(PaymentMethod == "Maya" ? 8 : 2)" 
+                                 Class="pa-4 cursor-pointer text-center payment-method-card"
+                                 Style="@(PaymentMethod == "Maya" ? "border: 3px solid #FF6F00; background: linear-gradient(135deg, #FFF8F0, #FFE0B2); border-radius: 16px; transform: scale(1.05);" : "border: 2px solid #E0E0E0; border-radius: 16px; background: white;")"
+                                 @onclick="@(() => PaymentMethod = "Maya")">
+                            <MudIcon Icon="@Icons.Material.Filled.PhoneAndroid" 
+                                    Color="@(PaymentMethod == "Maya" ? Color.Primary : Color.Default)" 
+                                    Style="font-size: 3rem;" />
+                            <MudText Typo="Typo.body1" Class="mt-2" Style="@(PaymentMethod == "Maya" ? "font-weight: 700; color: #FF6F00;" : "font-weight: 600;")">Maya</MudText>
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="6" sm="3">
+                        <MudPaper Elevation="@(PaymentMethod == "Card" ? 8 : 2)" 
+                                 Class="pa-4 cursor-pointer text-center payment-method-card"
+                                 Style="@(PaymentMethod == "Card" ? "border: 3px solid #FF6F00; background: linear-gradient(135deg, #FFF8F0, #FFE0B2); border-radius: 16px; transform: scale(1.05);" : "border: 2px solid #E0E0E0; border-radius: 16px; background: white;")"
+                                 @onclick="@(() => PaymentMethod = "Card")">
+                            <MudIcon Icon="@Icons.Material.Filled.CreditCard" 
+                                    Color="@(PaymentMethod == "Card" ? Color.Primary : Color.Default)" 
+                                    Style="font-size: 3rem;" />
+                            <MudText Typo="Typo.body1" Class="mt-2" Style="@(PaymentMethod == "Card" ? "font-weight: 700; color: #FF6F00;" : "font-weight: 600;")">Card</MudText>
+                        </MudPaper>
+                    </MudItem>
+                </MudGrid>
+                
+                <!-- Submit Button -->
+                <MudButton Variant="Variant.Filled"
+                          Color="Color.Success"
+                          Size="Size.Large"
+                          FullWidth="true"
+                          OnClick="SubmitOrder"
+                          Disabled="@(!isFormValid || !OrderService.HasItems() || isProcessing)"
+                          StartIcon="@(isProcessing ? null : Icons.Material.Filled.CheckCircle)"
+                          Style="border-radius: 50px; padding: 20px 32px; font-weight: 700; font-size: 1.2rem; box-shadow: 0 8px 24px rgba(76, 175, 80, 0.4); text-transform: uppercase; letter-spacing: 0.5px;">
+                    @if (isProcessing)
+                    {
+                        <MudProgressCircular Color="Color.Surface" Size="Size.Small" Indeterminate="true" Class="me-2" />
+                        <span>Processing Order...</span>
+                    }
+                    else
+                    {
+                        <span>Place Order - @CurrencyService.FormatPeso(GetTotal())</span>
+                    }
+                </MudButton>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+</div>
+
+@code {
+    private string CustomerName = "";
+    private string CustomerEmail = "";
+    private string CustomerPhone = "";
+    private string OrderType = "Dine In";
+    private string DeliveryAddress = "";
+    private string SpecialInstructions = "";
+    private string PaymentMethod = "Cash";
+    
+    private MudForm form = new();
+    private bool isFormValid;
+    private string[] errors = { };
+    private bool isProcessing = false;
+
+    private decimal GetSubtotal()
+    {
+        return OrderService.GetCartTotal();
+    }
+
+    private decimal GetTax()
+    {
+        return CurrencyService.CalculateVat(GetSubtotal());
+    }
+
+    private decimal GetTotal()
+    {
+        return CurrencyService.CalculateTotal(GetSubtotal());
+    }
+
+    private void GoBackToKiosk()
+    {
+        NavigationManager.NavigateTo("/kiosk");
+    }
+
+    private async Task SubmitOrder()
+    {
+        if (!isFormValid || !OrderService.HasItems() || isProcessing)
+        {
+            Snackbar.Add("Please fill in all required fields and ensure your cart has items.", Severity.Warning);
+            return;
+        }
+
+        isProcessing = true;
+        StateHasChanged();
+
+        try
+        {
+            // Validate product quantities before processing
+            var quantityValidation = await ValidateProductQuantities();
+            if (!quantityValidation.IsValid)
+            {
+                Snackbar.Add(quantityValidation.ErrorMessage, Severity.Error);
+                isProcessing = false;
+                StateHasChanged();
+                return;
+            }
+            
+            if (PaymentMethod == "Cash")
+            {
+                // Handle cash payment - direct order placement
+                await ProcessCashOrder();
+            }
+            else
+            {
+                // Handle digital payments through Xendit
+                await ProcessDigitalPayment();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error processing order: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isProcessing = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ProcessCashOrder()
+    {
+        try
+        {
+            // Create order in database with Pending status for cash payment
+            var order = await CreateOrderInDatabase("Cash", null);
+            
+            Snackbar.Add("Redirecting to cash payment...", Severity.Info);
+            
+            // Small delay to show the snackbar
+            await Task.Delay(500);
+            
+            // Clear the cart
+            OrderService.ClearCart();
+            
+            // Redirect to cash payment page
+            NavigationManager.NavigateTo($"/cash-payment?orderNumber={order.OrderNumber}&totalAmount={order.TotalAmount}");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error processing cash order: {ex.Message}", Severity.Error);
+            throw;
+        }
+    }
+
+    private async Task ProcessDigitalPayment()
+    {
+        var total = GetTotal();
+        var orderDescription = $"Restaurant Order - {DateTime.Now:yyyy-MM-dd HH:mm}";
+        
+        // Get base URL safely - use NavigationManager.Uri instead of BaseUri
+        var baseUrl = NavigationManager.Uri.Substring(0, NavigationManager.Uri.IndexOf("/checkout", StringComparison.OrdinalIgnoreCase));
+        if (!baseUrl.EndsWith("/"))
+        {
+            baseUrl += "/";
+        }
+
+        try
+        {
+            string paymentUrl = "";
+            string externalId = "";
+
+            if (PaymentMethod == "GCash")
+            {
+                externalId = $"gcash_{DateTime.UtcNow:yyyyMMddHHmmss}_{Guid.NewGuid():N}";
+                
+                // Save order to database before payment
+                await CreateOrderInDatabase("GCash", externalId);
+                
+                var callbackUrl = $"{baseUrl}api/callback/payment/callback?external_id={externalId}";
+                
+                Snackbar.Add("Creating GCash payment link...", Severity.Info);
+                var payment = await PaymentService.CreateGCashPaymentAsync(
+                    externalId,
+                    total,
+                    CustomerPhone,
+                    callbackUrl
+                );
+
+                paymentUrl = payment.Actions?.MobileWebCheckoutUrl ?? payment.Actions?.DesktopWebCheckoutUrl ?? "";
+            }
+            else if (PaymentMethod == "Maya")
+            {
+                externalId = $"maya_{DateTime.UtcNow:yyyyMMddHHmmss}_{Guid.NewGuid():N}";
+                
+                // Save order to database before payment
+                await CreateOrderInDatabase("Maya", externalId);
+                
+                var callbackUrl = $"{baseUrl}api/callback/payment/callback?external_id={externalId}";
+                
+                Snackbar.Add("Creating Maya payment link...", Severity.Info);
+                var payment = await PaymentService.CreateMayaPaymentAsync(
+                    externalId,
+                    total,
+                    CustomerPhone,
+                    callbackUrl
+                );
+
+                paymentUrl = payment.Actions?.MobileWebCheckoutUrl ?? payment.Actions?.DesktopWebCheckoutUrl ?? "";
+            }
+            else if (PaymentMethod == "Card")
+            {
+                externalId = $"invoice_{DateTime.UtcNow:yyyyMMddHHmmss}_{Guid.NewGuid():N}";
+                
+                // Save order to database before payment
+                await CreateOrderInDatabase("Card/Invoice", externalId);
+                
+                var successUrl = $"{baseUrl}payment/success?external_id={externalId}";
+                var failureUrl = $"{baseUrl}payment/failure?external_id={externalId}";
+                
+                Snackbar.Add("Creating payment invoice...", Severity.Info);
+                var invoice = await PaymentService.CreateInvoiceAsync(
+                    externalId,
+                    total,
+                    CustomerName,
+                    CustomerEmail,
+                    orderDescription,
+                    successUrl,
+                    failureUrl
+                );
+
+                paymentUrl = invoice.InvoiceUrl;
+            }
+
+            if (!string.IsNullOrEmpty(paymentUrl))
+            {
+                // Redirect to payment page in the same tab
+                NavigationManager.NavigateTo(paymentUrl, forceLoad: true);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error creating payment: {ex.Message}", Severity.Error);
+            throw;
+        }
+    }
+
+    private void ClearFormAndCart()
+    {
+        OrderService.ClearCart();
+        CustomerName = "";
+        CustomerEmail = "";
+        CustomerPhone = "";
+        OrderType = "Dine In";
+        DeliveryAddress = "";
+        SpecialInstructions = "";
+        PaymentMethod = "Cash";
+    }
+
+    private async Task<Order> CreateOrderInDatabase(string paymentMethod, string? externalId)
+    {
+        var subtotal = GetSubtotal();
+        var tax = GetTax();
+        var total = GetTotal();
+        
+        // Generate unique order number
+        var orderNumber = $"ORD-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString().Substring(0, 8).ToUpper()}";
+        
+        var order = new Order
+        {
+            OrderNumber = orderNumber,
+            ExternalId = externalId,
+            CustomerName = CustomerName,
+            CustomerEmail = CustomerEmail,
+            CustomerPhone = CustomerPhone,
+            SubTotal = subtotal,
+            Tax = tax,
+            TotalAmount = total,
+            PaymentMethod = paymentMethod,
+            Status = OrderStatus.Pending,
+            Notes = $"Order Type: {OrderType}" + 
+                    (!string.IsNullOrEmpty(DeliveryAddress) ? $"\nDelivery Address: {DeliveryAddress}" : "") +
+                    (!string.IsNullOrEmpty(SpecialInstructions) ? $"\nSpecial Instructions: {SpecialInstructions}" : ""),
+            CreatedAt = DateTime.UtcNow
+        };
+        
+        // Add order items
+        foreach (var cartItem in OrderService.GetCartItems())
+        {
+            var orderItem = new OrderItem
+            {
+                ProductId = cartItem.Product.Id,
+                ProductName = cartItem.Product.Name,
+                UnitPrice = cartItem.Product.Price,
+                Quantity = cartItem.Quantity,
+                LineTotal = cartItem.Product.Price * cartItem.Quantity,
+                CreatedAt = DateTime.UtcNow
+            };
+            
+            order.OrderItems.Add(orderItem);
+        }
+        
+        // Save to database
+        return await OrderRepository.CreateOrderAsync(order);
+    }
+    
+    private async Task<(bool IsValid, string ErrorMessage)> ValidateProductQuantities()
+    {
+        foreach (var cartItem in OrderService.GetCartItems())
+        {
+            // Get the latest product data from database
+            var product = await ProductService.GetProductByIdAsync(cartItem.Product.Id);
+            
+            if (product == null)
+            {
+                return (false, $"Product '{cartItem.Product.Name}' is no longer available.");
+            }
+            
+            if (!product.IsActive)
+            {
+                return (false, $"Product '{cartItem.Product.Name}' is currently unavailable.");
+            }
+            
+            if (product.Quantity < cartItem.Quantity)
+            {
+                return (false, $"Insufficient quantity for '{cartItem.Product.Name}'. Available: {product.Quantity}, Requested: {cartItem.Quantity}");
+            }
+        }
+        
+        return (true, string.Empty);
+    }
+}

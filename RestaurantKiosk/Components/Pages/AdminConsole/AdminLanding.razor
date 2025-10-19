@@ -1,0 +1,150 @@
+﻿@page "/admin"
+@using RestaurantKiosk.Components.Layout
+
+@layout AdminLayout
+
+@attribute [Authorize]
+
+@inject NavigationManager navigationManager
+
+@* <nav class="navbar bg-body-tertiary">
+	<div class="container">
+		<a class="navbar-brand" href="#">
+			<img src="imgs/logo.png" alt="logo" width="30" height="24">
+			<span class="fw-bold">Admin Console</span>
+		</a>
+	</div>
+</nav> *@
+
+<!-- Navigation Bar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+	<div class="container">
+		<a class="navbar-brand d-flex align-items-center" href="#">
+			<img src="imgs/logo.png" alt="logo" width="30" height="30" class="me-2">
+			<span class="fw-bold fs-4">Admin Console</span>
+		</a>
+		<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+			<span class="navbar-toggler-icon"></span>
+		</button>
+		<div class="navbar-collapse collapse" id="navbarNav">
+			<ul class="navbar-nav ms-auto">
+				<li class="nav-item">
+					<a class="nav-link" href="/">Back to Home</a>
+				</li>
+			</ul>
+		</div>
+	</div>
+</nav>
+
+<!-- Hero Section -->
+<div class="bg-light py-5">
+	<div class="container">
+		<div class="row justify-content-center text-center">
+			<div class="col-lg-8">
+				<h1 class="display-4 fw-bold text-primary mb-3">Restaurant Management</h1>
+				<p class="lead text-muted mb-5">Manage your restaurant operations efficiently with our comprehensive admin tools</p>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Main Content -->
+<div class="container my-5">
+	<div class="row g-4 justify-content-center">
+		<!-- Inventory Management Card -->
+		<div class="col-lg-5 col-md-6">
+			<div class="card h-100 hover-card border-0 shadow-lg">
+				<div class="card-body p-5 text-center">
+					<div class="mb-4">
+						<div class="bg-primary bg-gradient rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+							<i class="bi bi-box-seam text-white" style="font-size: 2rem;"></i>
+						</div>
+					</div>
+					<h3 class="card-title fw-bold text-primary mb-3">Inventory Management</h3>
+					<p class="card-text text-muted mb-4">Track stock levels, manage suppliers, and monitor product availability across your restaurant.</p>
+					<button @onclick="@(() => navigate("/admin/inventory"))" class="btn btn-primary btn-lg rounded-pill fw-semibold px-4 py-3">
+						<i class="bi bi-arrow-right me-2"></i>Manage Inventory
+					</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- Category Management Card -->
+		<div class="col-lg-5 col-md-6">
+			<div class="card h-100 hover-card border-0 shadow-lg">
+				<div class="card-body p-5 text-center">
+					<div class="mb-4">
+						<div class="bg-info bg-gradient rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+							<i class="bi bi-tags text-white" style="font-size: 2rem;"></i>
+						</div>
+					</div>
+					<h3 class="card-title fw-bold text-info mb-3">Category Management</h3>
+					<p class="card-text text-muted mb-4">Create, update, and organize product categories. Manage category hierarchy and visibility.</p>
+					<button @onclick="@(() => navigate("/admin/categories"))" class="btn btn-info btn-lg rounded-pill fw-semibold px-4 py-3">
+						<i class="bi bi-arrow-right me-2"></i>Manage Categories
+					</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- Orders Management Card -->
+		<div class="col-lg-5 col-md-6">
+			<div class="card h-100 hover-card border-0 shadow-lg">
+				<div class="card-body p-5 text-center">
+					<div class="mb-4">
+						<div class="bg-success bg-gradient rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+							<i class="bi bi-receipt text-white" style="font-size: 2rem;"></i>
+						</div>
+					</div>
+				<h3 class="card-title fw-bold text-success mb-3">Orders Management</h3>
+				<p class="card-text text-muted mb-4">View, process, and track customer orders in real-time. Manage order status and fulfillment.</p>
+				<button @onclick="@(() => navigate("/admin/orders"))" class="btn btn-success btn-lg rounded-pill fw-semibold px-4 py-3">
+					<i class="bi bi-arrow-right me-2"></i>Manage Orders
+				</button>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Custom Styles -->
+<style>
+	.hover-card {
+		transition: transform 0.3s ease, box-shadow 0.3s ease;
+	}
+	
+	.hover-card:hover {
+		transform: translateY(-5px);
+		box-shadow: 0 1rem 3rem rgba(0,0,0,.175) !important;
+	}
+	
+	.btn {
+		transition: all 0.3s ease;
+	}
+	
+	.btn:hover {
+		transform: translateY(-2px);
+	}
+	
+	.bg-gradient {
+		background: linear-gradient(135deg, var(--bs-primary) 0%, var(--bs-primary-dark) 100%);
+	}
+	
+	.bg-info.bg-gradient {
+		background: linear-gradient(135deg, var(--bs-info) 0%, var(--bs-info-dark) 100%);
+	}
+	
+	.bg-success.bg-gradient {
+		background: linear-gradient(135deg, var(--bs-success) 0%, var(--bs-success-dark) 100%);
+	}
+</style>
+
+
+@code {
+
+	private void navigate(string link)
+	{
+		navigationManager.NavigateTo(link, true);
+	}
+
+}

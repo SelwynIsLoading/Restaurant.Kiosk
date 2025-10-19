@@ -1,0 +1,265 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\cauba\\Documents\\selwyn dev\\2025\\Restaurant\\RestaurantKiosk\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{58F70038-FA3E-4745-AE76-0354DC953A01}|RestaurantKiosk\\RestaurantKiosk.csproj|c:\\users\\cauba\\documents\\selwyn dev\\2025\\restaurant\\restaurantkiosk\\restaurantkiosk\\components\\pages\\paymentsuccess.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{58F70038-FA3E-4745-AE76-0354DC953A01}|RestaurantKiosk\\RestaurantKiosk.csproj|solutionrelative:restaurantkiosk\\components\\pages\\paymentsuccess.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{58F70038-FA3E-4745-AE76-0354DC953A01}|RestaurantKiosk\\RestaurantKiosk.csproj|c:\\users\\cauba\\documents\\selwyn dev\\2025\\restaurant\\restaurantkiosk\\restaurantkiosk\\components\\pages\\checkout.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{58F70038-FA3E-4745-AE76-0354DC953A01}|RestaurantKiosk\\RestaurantKiosk.csproj|solutionrelative:restaurantkiosk\\components\\pages\\checkout.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{58F70038-FA3E-4745-AE76-0354DC953A01}|RestaurantKiosk\\RestaurantKiosk.csproj|c:\\users\\cauba\\documents\\selwyn dev\\2025\\restaurant\\restaurantkiosk\\restaurantkiosk\\data\\services\\paymentservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{58F70038-FA3E-4745-AE76-0354DC953A01}|RestaurantKiosk\\RestaurantKiosk.csproj|solutionrelative:restaurantkiosk\\data\\services\\paymentservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{58F70038-FA3E-4745-AE76-0354DC953A01}|RestaurantKiosk\\RestaurantKiosk.csproj|c:\\users\\cauba\\documents\\selwyn dev\\2025\\restaurant\\restaurantkiosk\\restaurantkiosk\\components\\pages\\kioskstart.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{58F70038-FA3E-4745-AE76-0354DC953A01}|RestaurantKiosk\\RestaurantKiosk.csproj|solutionrelative:restaurantkiosk\\components\\pages\\kioskstart.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{58F70038-FA3E-4745-AE76-0354DC953A01}|RestaurantKiosk\\RestaurantKiosk.csproj|c:\\users\\cauba\\documents\\selwyn dev\\2025\\restaurant\\restaurantkiosk\\restaurantkiosk\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{58F70038-FA3E-4745-AE76-0354DC953A01}|RestaurantKiosk\\RestaurantKiosk.csproj|solutionrelative:restaurantkiosk\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{58F70038-FA3E-4745-AE76-0354DC953A01}|RestaurantKiosk\\RestaurantKiosk.csproj|c:\\users\\cauba\\documents\\selwyn dev\\2025\\restaurant\\restaurantkiosk\\restaurantkiosk\\local_development_setup.md||{EFC0BB08-EA7D-40C6-A696-C870411A895B}",
+      "RelativeMoniker": "D:0:0:{58F70038-FA3E-4745-AE76-0354DC953A01}|RestaurantKiosk\\RestaurantKiosk.csproj|solutionrelative:restaurantkiosk\\local_development_setup.md||{EFC0BB08-EA7D-40C6-A696-C870411A895B}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{58F70038-FA3E-4745-AE76-0354DC953A01}|RestaurantKiosk\\RestaurantKiosk.csproj|c:\\users\\cauba\\documents\\selwyn dev\\2025\\restaurant\\restaurantkiosk\\restaurantkiosk\\components\\pages\\paymentfailure.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{58F70038-FA3E-4745-AE76-0354DC953A01}|RestaurantKiosk\\RestaurantKiosk.csproj|solutionrelative:restaurantkiosk\\components\\pages\\paymentfailure.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{58F70038-FA3E-4745-AE76-0354DC953A01}|RestaurantKiosk\\RestaurantKiosk.csproj|c:\\users\\cauba\\documents\\selwyn dev\\2025\\restaurant\\restaurantkiosk\\restaurantkiosk\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{58F70038-FA3E-4745-AE76-0354DC953A01}|RestaurantKiosk\\RestaurantKiosk.csproj|solutionrelative:restaurantkiosk\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{58F70038-FA3E-4745-AE76-0354DC953A01}|RestaurantKiosk\\RestaurantKiosk.csproj|c:\\users\\cauba\\documents\\selwyn dev\\2025\\restaurant\\restaurantkiosk\\restaurantkiosk\\xendit_setup.md||{EFC0BB08-EA7D-40C6-A696-C870411A895B}",
+      "RelativeMoniker": "D:0:0:{58F70038-FA3E-4745-AE76-0354DC953A01}|RestaurantKiosk\\RestaurantKiosk.csproj|solutionrelative:restaurantkiosk\\xendit_setup.md||{EFC0BB08-EA7D-40C6-A696-C870411A895B}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{58F70038-FA3E-4745-AE76-0354DC953A01}|RestaurantKiosk\\RestaurantKiosk.csproj|c:\\users\\cauba\\documents\\selwyn dev\\2025\\restaurant\\restaurantkiosk\\restaurantkiosk\\components\\pages\\kiosk.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{58F70038-FA3E-4745-AE76-0354DC953A01}|RestaurantKiosk\\RestaurantKiosk.csproj|solutionrelative:restaurantkiosk\\components\\pages\\kiosk.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{58F70038-FA3E-4745-AE76-0354DC953A01}|RestaurantKiosk\\RestaurantKiosk.csproj|c:\\users\\cauba\\documents\\selwyn dev\\2025\\restaurant\\restaurantkiosk\\restaurantkiosk\\components\\pages\\home.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{58F70038-FA3E-4745-AE76-0354DC953A01}|RestaurantKiosk\\RestaurantKiosk.csproj|solutionrelative:restaurantkiosk\\components\\pages\\home.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{58F70038-FA3E-4745-AE76-0354DC953A01}|RestaurantKiosk\\RestaurantKiosk.csproj|c:\\users\\cauba\\documents\\selwyn dev\\2025\\restaurant\\restaurantkiosk\\restaurantkiosk\\components\\pages\\adminconsole\\categorydialog.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{58F70038-FA3E-4745-AE76-0354DC953A01}|RestaurantKiosk\\RestaurantKiosk.csproj|solutionrelative:restaurantkiosk\\components\\pages\\adminconsole\\categorydialog.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{58F70038-FA3E-4745-AE76-0354DC953A01}|RestaurantKiosk\\RestaurantKiosk.csproj|c:\\users\\cauba\\documents\\selwyn dev\\2025\\restaurant\\restaurantkiosk\\restaurantkiosk\\components\\pages\\adminconsole\\productdialog.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{58F70038-FA3E-4745-AE76-0354DC953A01}|RestaurantKiosk\\RestaurantKiosk.csproj|solutionrelative:restaurantkiosk\\components\\pages\\adminconsole\\productdialog.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{58F70038-FA3E-4745-AE76-0354DC953A01}|RestaurantKiosk\\RestaurantKiosk.csproj|c:\\users\\cauba\\documents\\selwyn dev\\2025\\restaurant\\restaurantkiosk\\restaurantkiosk\\components\\pages\\adminconsole\\inventorymanagement.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{58F70038-FA3E-4745-AE76-0354DC953A01}|RestaurantKiosk\\RestaurantKiosk.csproj|solutionrelative:restaurantkiosk\\components\\pages\\adminconsole\\inventorymanagement.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{58F70038-FA3E-4745-AE76-0354DC953A01}|RestaurantKiosk\\RestaurantKiosk.csproj|c:\\users\\cauba\\documents\\selwyn dev\\2025\\restaurant\\restaurantkiosk\\restaurantkiosk\\data\\services\\productservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{58F70038-FA3E-4745-AE76-0354DC953A01}|RestaurantKiosk\\RestaurantKiosk.csproj|solutionrelative:restaurantkiosk\\data\\services\\productservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 6,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{aa2115a1-9712-457b-9047-dbb71ca2cdd2}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "XENDIT_SETUP.md",
+              "DocumentMoniker": "C:\\Users\\cauba\\Documents\\selwyn dev\\2025\\Restaurant\\RestaurantKiosk\\RestaurantKiosk\\XENDIT_SETUP.md",
+              "RelativeDocumentMoniker": "RestaurantKiosk\\XENDIT_SETUP.md",
+              "ToolTip": "C:\\Users\\cauba\\Documents\\selwyn dev\\2025\\Restaurant\\RestaurantKiosk\\RestaurantKiosk\\XENDIT_SETUP.md",
+              "RelativeToolTip": "RestaurantKiosk\\XENDIT_SETUP.md",
+              "ViewState": "AgIAAEwAAAAAAAAAAAAAAFwAAAAgAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001818|",
+              "WhenOpened": "2025-09-24T07:14:03.638Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "appsettings.json",
+              "DocumentMoniker": "C:\\Users\\cauba\\Documents\\selwyn dev\\2025\\Restaurant\\RestaurantKiosk\\RestaurantKiosk\\appsettings.json",
+              "RelativeDocumentMoniker": "RestaurantKiosk\\appsettings.json",
+              "ToolTip": "C:\\Users\\cauba\\Documents\\selwyn dev\\2025\\Restaurant\\RestaurantKiosk\\RestaurantKiosk\\appsettings.json",
+              "RelativeToolTip": "RestaurantKiosk\\appsettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAABgAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2025-09-24T07:07:46.216Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "KioskStart.razor",
+              "DocumentMoniker": "C:\\Users\\cauba\\Documents\\selwyn dev\\2025\\Restaurant\\RestaurantKiosk\\RestaurantKiosk\\Components\\Pages\\KioskStart.razor",
+              "RelativeDocumentMoniker": "RestaurantKiosk\\Components\\Pages\\KioskStart.razor",
+              "ToolTip": "C:\\Users\\cauba\\Documents\\selwyn dev\\2025\\Restaurant\\RestaurantKiosk\\RestaurantKiosk\\Components\\Pages\\KioskStart.razor",
+              "RelativeToolTip": "RestaurantKiosk\\Components\\Pages\\KioskStart.razor",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAmwBYAAABTAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2025-09-24T06:32:06.855Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "Home.razor",
+              "DocumentMoniker": "C:\\Users\\cauba\\Documents\\selwyn dev\\2025\\Restaurant\\RestaurantKiosk\\RestaurantKiosk\\Components\\Pages\\Home.razor",
+              "RelativeDocumentMoniker": "RestaurantKiosk\\Components\\Pages\\Home.razor",
+              "ToolTip": "C:\\Users\\cauba\\Documents\\selwyn dev\\2025\\Restaurant\\RestaurantKiosk\\RestaurantKiosk\\Components\\Pages\\Home.razor",
+              "RelativeToolTip": "RestaurantKiosk\\Components\\Pages\\Home.razor",
+              "ViewState": "AgIAAFEAAAAAAAAAAAAEwFcAAAAGAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2025-09-24T06:13:21.394Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Checkout.razor",
+              "DocumentMoniker": "C:\\Users\\cauba\\Documents\\selwyn dev\\2025\\Restaurant\\RestaurantKiosk\\RestaurantKiosk\\Components\\Pages\\Checkout.razor",
+              "RelativeDocumentMoniker": "RestaurantKiosk\\Components\\Pages\\Checkout.razor",
+              "ToolTip": "C:\\Users\\cauba\\Documents\\selwyn dev\\2025\\Restaurant\\RestaurantKiosk\\RestaurantKiosk\\Components\\Pages\\Checkout.razor",
+              "RelativeToolTip": "RestaurantKiosk\\Components\\Pages\\Checkout.razor",
+              "ViewState": "AgIAADcBAAAAAAAAAAAkwEYBAABOAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2025-09-24T06:13:04.403Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "PaymentSuccess.razor",
+              "DocumentMoniker": "C:\\Users\\cauba\\Documents\\selwyn dev\\2025\\Restaurant\\RestaurantKiosk\\RestaurantKiosk\\Components\\Pages\\PaymentSuccess.razor",
+              "RelativeDocumentMoniker": "RestaurantKiosk\\Components\\Pages\\PaymentSuccess.razor",
+              "ToolTip": "C:\\Users\\cauba\\Documents\\selwyn dev\\2025\\Restaurant\\RestaurantKiosk\\RestaurantKiosk\\Components\\Pages\\PaymentSuccess.razor",
+              "RelativeToolTip": "RestaurantKiosk\\Components\\Pages\\PaymentSuccess.razor",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2025-09-24T07:31:48.609Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "PaymentService.cs",
+              "DocumentMoniker": "C:\\Users\\cauba\\Documents\\selwyn dev\\2025\\Restaurant\\RestaurantKiosk\\RestaurantKiosk\\Data\\Services\\PaymentService.cs",
+              "RelativeDocumentMoniker": "RestaurantKiosk\\Data\\Services\\PaymentService.cs",
+              "ToolTip": "C:\\Users\\cauba\\Documents\\selwyn dev\\2025\\Restaurant\\RestaurantKiosk\\RestaurantKiosk\\Data\\Services\\PaymentService.cs",
+              "RelativeToolTip": "RestaurantKiosk\\Data\\Services\\PaymentService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAOUAAAANAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-24T07:15:11.379Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "PaymentFailure.razor",
+              "DocumentMoniker": "C:\\Users\\cauba\\Documents\\selwyn dev\\2025\\Restaurant\\RestaurantKiosk\\RestaurantKiosk\\Components\\Pages\\PaymentFailure.razor",
+              "RelativeDocumentMoniker": "RestaurantKiosk\\Components\\Pages\\PaymentFailure.razor",
+              "ToolTip": "C:\\Users\\cauba\\Documents\\selwyn dev\\2025\\Restaurant\\RestaurantKiosk\\RestaurantKiosk\\Components\\Pages\\PaymentFailure.razor",
+              "RelativeToolTip": "RestaurantKiosk\\Components\\Pages\\PaymentFailure.razor",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2025-09-24T07:31:42.317Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "LOCAL_DEVELOPMENT_SETUP.md",
+              "DocumentMoniker": "C:\\Users\\cauba\\Documents\\selwyn dev\\2025\\Restaurant\\RestaurantKiosk\\RestaurantKiosk\\LOCAL_DEVELOPMENT_SETUP.md",
+              "RelativeDocumentMoniker": "RestaurantKiosk\\LOCAL_DEVELOPMENT_SETUP.md",
+              "ToolTip": "C:\\Users\\cauba\\Documents\\selwyn dev\\2025\\Restaurant\\RestaurantKiosk\\RestaurantKiosk\\LOCAL_DEVELOPMENT_SETUP.md",
+              "RelativeToolTip": "RestaurantKiosk\\LOCAL_DEVELOPMENT_SETUP.md",
+              "ViewState": "AgIAADYAAAAAAAAAAAAAAEIAAABHAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001818|",
+              "WhenOpened": "2025-09-24T08:00:51.59Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\cauba\\Documents\\selwyn dev\\2025\\Restaurant\\RestaurantKiosk\\RestaurantKiosk\\Program.cs",
+              "RelativeDocumentMoniker": "RestaurantKiosk\\Program.cs",
+              "ToolTip": "C:\\Users\\cauba\\Documents\\selwyn dev\\2025\\Restaurant\\RestaurantKiosk\\RestaurantKiosk\\Program.cs",
+              "RelativeToolTip": "RestaurantKiosk\\Program.cs",
+              "ViewState": "AgIAABgAAAAAAAAAAAAAADUAAAAhAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-24T07:38:15.788Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "Kiosk.razor",
+              "DocumentMoniker": "C:\\Users\\cauba\\Documents\\selwyn dev\\2025\\Restaurant\\RestaurantKiosk\\RestaurantKiosk\\Components\\Pages\\Kiosk.razor",
+              "RelativeDocumentMoniker": "RestaurantKiosk\\Components\\Pages\\Kiosk.razor",
+              "ToolTip": "C:\\Users\\cauba\\Documents\\selwyn dev\\2025\\Restaurant\\RestaurantKiosk\\RestaurantKiosk\\Components\\Pages\\Kiosk.razor",
+              "RelativeToolTip": "RestaurantKiosk\\Components\\Pages\\Kiosk.razor",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAADEAAABIAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2025-09-24T06:09:31.159Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "ProductDialog.razor",
+              "DocumentMoniker": "C:\\Users\\cauba\\Documents\\selwyn dev\\2025\\Restaurant\\RestaurantKiosk\\RestaurantKiosk\\Components\\Pages\\AdminConsole\\ProductDialog.razor",
+              "RelativeDocumentMoniker": "RestaurantKiosk\\Components\\Pages\\AdminConsole\\ProductDialog.razor",
+              "ToolTip": "C:\\Users\\cauba\\Documents\\selwyn dev\\2025\\Restaurant\\RestaurantKiosk\\RestaurantKiosk\\Components\\Pages\\AdminConsole\\ProductDialog.razor",
+              "RelativeToolTip": "RestaurantKiosk\\Components\\Pages\\AdminConsole\\ProductDialog.razor",
+              "ViewState": "AgIAABsAAAAAAAAAAAAAAA0AAAAnAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2025-09-24T05:43:58.65Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "CategoryDialog.razor",
+              "DocumentMoniker": "C:\\Users\\cauba\\Documents\\selwyn dev\\2025\\Restaurant\\RestaurantKiosk\\RestaurantKiosk\\Components\\Pages\\AdminConsole\\CategoryDialog.razor",
+              "RelativeDocumentMoniker": "RestaurantKiosk\\Components\\Pages\\AdminConsole\\CategoryDialog.razor",
+              "ToolTip": "C:\\Users\\cauba\\Documents\\selwyn dev\\2025\\Restaurant\\RestaurantKiosk\\RestaurantKiosk\\Components\\Pages\\AdminConsole\\CategoryDialog.razor",
+              "RelativeToolTip": "RestaurantKiosk\\Components\\Pages\\AdminConsole\\CategoryDialog.razor",
+              "ViewState": "AgIAABsAAAAAAAAAAAAAACIAAAAuAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2025-09-24T05:36:59.98Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 14,
+              "Title": "ProductService.cs",
+              "DocumentMoniker": "C:\\Users\\cauba\\Documents\\selwyn dev\\2025\\Restaurant\\RestaurantKiosk\\RestaurantKiosk\\Data\\Services\\ProductService.cs",
+              "RelativeDocumentMoniker": "RestaurantKiosk\\Data\\Services\\ProductService.cs",
+              "ToolTip": "C:\\Users\\cauba\\Documents\\selwyn dev\\2025\\Restaurant\\RestaurantKiosk\\RestaurantKiosk\\Data\\Services\\ProductService.cs",
+              "RelativeToolTip": "RestaurantKiosk\\Data\\Services\\ProductService.cs",
+              "ViewState": "AgIAABUAAAAAAAAAAAAYwBsAAAApAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-24T05:24:47.274Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 13,
+              "Title": "InventoryManagement.razor",
+              "DocumentMoniker": "C:\\Users\\cauba\\Documents\\selwyn dev\\2025\\Restaurant\\RestaurantKiosk\\RestaurantKiosk\\Components\\Pages\\AdminConsole\\InventoryManagement.razor",
+              "RelativeDocumentMoniker": "RestaurantKiosk\\Components\\Pages\\AdminConsole\\InventoryManagement.razor",
+              "ToolTip": "C:\\Users\\cauba\\Documents\\selwyn dev\\2025\\Restaurant\\RestaurantKiosk\\RestaurantKiosk\\Components\\Pages\\AdminConsole\\InventoryManagement.razor",
+              "RelativeToolTip": "RestaurantKiosk\\Components\\Pages\\AdminConsole\\InventoryManagement.razor",
+              "ViewState": "AgIAAJgBAAAAAAAAAAAAAIgAAAB9AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2025-09-15T08:00:01.525Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

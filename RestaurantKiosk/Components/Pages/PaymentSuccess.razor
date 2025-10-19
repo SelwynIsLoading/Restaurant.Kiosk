@@ -1,0 +1,181 @@
+@page "/payment/success"
+@layout KioskLayout
+@using RestaurantKiosk.Data.Services
+@using RestaurantKiosk.Data.Entities
+@using RestaurantKiosk.Components.Layout
+@inject NavigationManager NavigationManager
+@inject IOrderService OrderService
+@inject IOrderRepository OrderRepository
+@inject IProductService ProductService
+@inject IJSRuntime JSRuntime
+@inject ICurrencyService CurrencyService
+@inject ILogger<PaymentSuccess> Logger
+@rendermode InteractiveServer
+
+<PageTitle>Payment Successful - Restaurant Kiosk</PageTitle>
+
+<div class="payment-result-container">
+    <div class="payment-result-content">
+        <div class="success-icon">
+            <MudIcon Icon="Icons.Material.Filled.CheckCircle" 
+                     Color="Color.Success" 
+                     Size="Size.Large" 
+                     Style="font-size: 4rem;" />
+        </div>
+        
+        <h1 class="success-title">Payment Successful!</h1>
+        
+        <p class="success-message">
+            Thank you for your payment. Your order has been confirmed and is being prepared.
+        </p>
+        
+        <div class="order-details">
+            <h3>Order Summary</h3>
+            @if (order != null)
+            {
+                <div class="order-info">
+                    <p><strong>Order Number:</strong> @order.OrderNumber</p>
+                    <p><strong>Payment Method:</strong> @order.PaymentMethod</p>
+                </div>
+                <div class="order-items">
+                    @foreach (var item in order.OrderItems)
+                    {
+                        <div class="order-item">
+                            <span class="item-name">@item.ProductName</span>
+                            <span class="item-quantity">x @item.Quantity</span>
+                            <span class="item-price">@CurrencyService.FormatPeso(item.LineTotal)</span>
+                        </div>
+                    }
+                </div>
+                
+                <div class="order-total">
+                    <p>Subtotal: @CurrencyService.FormatPeso(order.SubTotal)</p>
+                    <p>VAT (12%): @CurrencyService.FormatPeso(order.Tax)</p>
+                    <strong>Total: @CurrencyService.FormatPeso(order.TotalAmount)</strong>
+                </div>
+            }
+            else if (isLoading)
+            {
+                <div class="loading-message">
+                    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+                    <p>Loading order details...</p>
+                </div>
+            }
+            else
+            {
+                <div class="error-message">
+                    <p>Unable to retrieve order details.</p>
+                </div>
+            }
+        </div>
+        
+        <div class="next-steps">
+            <h3>What's Next?</h3>
+            <ul>
+                <li>You will receive an email confirmation shortly</li>
+                <li>Your order is being prepared by our kitchen</li>
+                <li>Estimated preparation time: 15-20 minutes</li>
+            </ul>
+        </div>
+        
+        <div class="action-buttons">
+            <MudButton Variant="Variant.Filled"
+                      Color="Color.Primary"
+                      Size="Size.Large"
+                      OnClick="StartNewOrder"
+                      Class="new-order-btn">
+                <MudIcon Icon="Icons.Material.Filled.Add" />
+                Start New Order
+            </MudButton>
+        </div>
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromQuery(Name = "external_id")]
+    public string? ExternalId { get; set; }
+
+    private Order? order;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Logger.LogInformation("PaymentSuccess page loaded with ExternalId: {ExternalId}", ExternalId);
+        
+        if (!string.IsNullOrEmpty(ExternalId))
+        {
+            try
+            {
+                // Retrieve order from database using ExternalId
+                order = await OrderRepository.GetOrderByExternalIdAsync(ExternalId);
+                
+                if (order != null)
+                {
+                    Logger.LogInformation("Order {OrderNumber} retrieved successfully with {ItemCount} items", 
+                        order.OrderNumber, order.OrderItems.Count);
+                    
+                    // Only update if status is still Pending (avoid duplicate processing)
+                    // if (order.Status == OrderStatus.Pending)
+                    // {
+                    //     Logger.LogInformation("Updating order {OrderNumber} status to Paid", order.OrderNumber);
+                    //     
+                    //     // Update order status to Paid
+                    //     await OrderRepository.UpdateOrderStatusAsync(ExternalId, OrderStatus.Paid, DateTime.UtcNow);
+                    //     
+                    //     // Decrease product quantities
+                    //     Logger.LogInformation("Decreasing product quantities for order {OrderNumber} (ID: {OrderId})", 
+                    //         order.OrderNumber, order.Id);
+                    //     
+                    //     var quantityDecreased = await ProductService.DecreaseProductQuantitiesForOrderAsync(order.Id);
+                    //     
+                    //     if (quantityDecreased)
+                    //     {
+                    //         Logger.LogInformation("Successfully decreased product quantities for order {OrderNumber}", order.OrderNumber);
+                    //     }
+                    //     else
+                    //     {
+                    //         Logger.LogWarning("Failed to decrease product quantities for order {OrderNumber}", order.OrderNumber);
+                    //     }
+                    // }
+                    // else
+                    // {
+                    //     Logger.LogInformation("Order {OrderNumber} already processed with status: {Status}", 
+                    //         order.OrderNumber, order.Status);
+                    // }
+                    
+                    // Clear the cart service since order is now saved
+                    OrderService.ClearCart();
+                }
+                else
+                {
+                    Logger.LogWarning("No order found with ExternalId: {ExternalId}", ExternalId);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error retrieving order with ExternalId: {ExternalId}", ExternalId);
+            }
+        }
+        else
+        {
+            Logger.LogWarning("PaymentSuccess page accessed without ExternalId");
+        }
+        
+        isLoading = false;
+    }
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (firstRender && order != null)
+		{
+			// Optionally, you can show a toast notification instead of alert
+            await JSRuntime.InvokeVoidAsync("alert", $"Payment successful! Your order {order.OrderNumber} is being prepared.");
+		}
+	}
+
+    private void StartNewOrder()
+    {
+        OrderService.ClearCart();
+        NavigationManager.NavigateTo("/kiosk");
+    }
+}

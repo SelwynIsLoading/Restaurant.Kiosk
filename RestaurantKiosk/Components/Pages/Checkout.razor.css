@@ -1,0 +1,254 @@
+/* Checkout Container with White and Orange Theme */
+.checkout-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #FFFFFF 0%, #FFF8F0 50%, #FFE0B2 100%);
+    background-attachment: fixed;
+    padding: 0;
+    margin: 0;
+    position: relative;
+    overflow-x: hidden;
+}
+
+.checkout-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(circle at 30% 40%, rgba(255, 111, 0, 0.06) 0%, transparent 50%),
+        radial-gradient(circle at 70% 60%, rgba(255, 152, 0, 0.06) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.payment-method-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+}
+
+.payment-method-card:hover {
+    transform: translateY(-6px) scale(1.03);
+    box-shadow: 0 12px 32px rgba(255, 111, 0, 0.3) !important;
+}
+
+.payment-method-card:active {
+    transform: translateY(-2px) scale(1.01);
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+/* Responsive Design */
+@media (max-width: 900px) {
+    .checkout-container {
+        background: linear-gradient(to bottom, #FFFFFF 0%, #FFF8F0 100%);
+    }
+}
+
+@media (max-width: 768px) {
+    .checkout-container {
+        background: linear-gradient(to bottom, #FFFFFF 0%, #FFF8F0 100%);
+        padding: 0;
+    }
+    
+    /* Header adjustments */
+    .checkout-container .mud-paper:first-child {
+        padding: 16px !important;
+        margin-bottom: 16px !important;
+        border-radius: 16px !important;
+    }
+    
+    .checkout-container .mud-avatar-large {
+        width: 56px !important;
+        height: 56px !important;
+    }
+    
+    .checkout-container h3 {
+        font-size: 1.5rem !important;
+    }
+    
+    .checkout-container .mud-button-outlined {
+        padding: 12px 20px !important;
+        font-size: 0.9rem !important;
+    }
+    
+    /* Grid layout - stack on mobile */
+    .checkout-container .mud-grid {
+        flex-direction: column-reverse;
+    }
+    
+    .checkout-container .mud-grid-item {
+        max-width: 100% !important;
+    }
+    
+    /* Summary card */
+    .checkout-container .mud-paper {
+        padding: 16px !important;
+        border-radius: 16px !important;
+        margin-bottom: 16px !important;
+    }
+    
+    /* Form fields */
+    .checkout-container .mud-input-root {
+        font-size: 16px !important;
+    }
+    
+    .checkout-container .mud-select {
+        font-size: 16px !important;
+    }
+    
+    /* Payment method cards */
+    .payment-method-card {
+        padding: 16px !important;
+    }
+    
+    .payment-method-card .mud-icon-root {
+        font-size: 2.5rem !important;
+    }
+    
+    .payment-method-card .mud-text-body1 {
+        font-size: 0.9rem !important;
+    }
+    
+    .payment-method-card:hover {
+        transform: translateY(-3px) scale(1.01);
+    }
+    
+    /* Submit button */
+    .checkout-container .mud-button-filled-size-large {
+        padding: 16px 24px !important;
+        font-size: 1rem !important;
+        min-height: 56px !important;
+    }
+    
+    /* Order items */
+    .checkout-container .mud-chip-small {
+        font-size: 0.85rem !important;
+    }
+}
+
+@media (max-width: 600px) {
+    .checkout-container .mud-paper:first-child > div {
+        flex-direction: column !important;
+        gap: 16px !important;
+        text-align: center;
+    }
+    
+    .checkout-container .mud-paper:first-child > div > div:first-child {
+        flex-direction: column !important;
+        align-items: center !important;
+    }
+    
+    .checkout-container h3 {
+        font-size: 1.25rem !important;
+        text-align: center;
+    }
+    
+    .checkout-container .mud-button-outlined {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .checkout-container .mud-paper {
+        padding: 12px !important;
+    }
+    
+    /* Payment grid - 2 columns on small mobile */
+    .checkout-container .mud-grid-item[class*="mud-grid-item-xs-6"] {
+        flex-grow: 0;
+        max-width: 50%;
+        flex-basis: 50%;
+    }
+    
+    .payment-method-card {
+        padding: 12px !important;
+    }
+    
+    .payment-method-card .mud-icon-root {
+        font-size: 2rem !important;
+    }
+    
+    .payment-method-card .mud-text-body1 {
+        font-size: 0.8rem !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .checkout-container .mud-avatar-large {
+        width: 48px !important;
+        height: 48px !important;
+    }
+    
+    .checkout-container h3 {
+        font-size: 1.1rem !important;
+    }
+    
+    .checkout-container .mud-text-body1 {
+        font-size: 0.85rem !important;
+    }
+    
+    .checkout-container h5 {
+        font-size: 1.1rem !important;
+    }
+    
+    .checkout-container h6 {
+        font-size: 1rem !important;
+    }
+    
+    /* Payment method cards - stay 2 columns */
+    .payment-method-card {
+        padding: 10px 8px !important;
+    }
+    
+    .payment-method-card .mud-icon-root {
+        font-size: 1.75rem !important;
+    }
+    
+    .payment-method-card .mud-text-body1 {
+        font-size: 0.75rem !important;
+    }
+    
+    /* Tighter spacing */
+    .checkout-container .mb-4 {
+        margin-bottom: 12px !important;
+    }
+    
+    .checkout-container .mb-5 {
+        margin-bottom: 16px !important;
+    }
+    
+    /* Submit button */
+    .checkout-container .mud-button-filled-size-large {
+        padding: 14px 20px !important;
+        font-size: 0.95rem !important;
+        min-height: 52px !important;
+    }
+}
+
+/* Touch Device Optimizations */
+@media (hover: none) and (pointer: coarse) {
+    .payment-method-card:hover {
+        transform: none;
+    }
+
+    .payment-method-card:active {
+        transform: scale(0.98);
+        transition: transform 0.1s ease;
+    }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+    .checkout-container::before,
+    .payment-method-card {
+        animation: none !important;
+        transition: none !important;
+    }
+
+    .payment-method-card:hover {
+        transform: none;
+    }
+}

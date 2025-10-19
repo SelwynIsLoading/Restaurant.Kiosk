@@ -1,0 +1,213 @@
+@using RestaurantKiosk.Data.Entities
+@using RestaurantKiosk.Data.Services
+@using Microsoft.AspNetCore.Components.Forms
+
+<MudDialog>
+    <DialogContent>
+        <MudContainer Style="max-width: 600px;">
+            <MudForm @ref="form" @bind-IsValid="@isFormValid" @bind-Errors="@errors">
+                <MudGrid>
+                    <MudItem xs="12" md="6">
+                        <MudTextField @bind-Value="Product.Name"
+                        For="@(() => Product.Name)"
+                        Label="Product Name"
+                        Required="true"
+                        RequiredError="Product name is required"
+                        Variant="Variant.Outlined" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudSelect @bind-Value="Product.Category"
+                        For="@(() => Product.Category)"
+                        Label="Category"
+                        Required="true"
+                        RequiredError="Category is required"
+                        Variant="Variant.Outlined">
+                            <MudSelectItem Value="@("")"></MudSelectItem>
+                            @foreach (var category in categories)
+                            {
+                                <MudSelectItem Value="@category">@category</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudTextField @bind-Value="Product.Description"
+                        For="@(() => Product.Description)"
+                        Label="Description"
+                        Variant="Variant.Outlined"
+                        Lines="3" />
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudPaper Class="pa-4" Style="border: 2px dashed #ccc; text-align: center;">
+                            <div class="d-flex flex-column align-items-center">
+                                @if (!string.IsNullOrEmpty(Product.ImageUrl))
+                                {
+                                    <img src="@Product.ImageUrl" alt="Product Image" style="max-width: 200px; max-height: 200px; margin-bottom: 10px;" />
+                                    <MudButton Color="Color.Error" Variant="Variant.Text" Size="Size.Small" @onclick="RemoveImage">
+                                        <MudIcon Icon="@Icons.Material.Filled.Delete" Class="mr-2" />
+                                        Remove Image
+                                    </MudButton>
+                                }
+                                else
+                                {
+                                    <MudIcon Icon="@Icons.Material.Filled.CloudUpload" Style="font-size: 48px; color: #ccc; margin-bottom: 10px;" />
+                                    <p class="text-muted mb-3">Upload a product image</p>
+                                }
+
+                                @* <InputFile OnChange="OnFileSelected" accept="image/*" style="display: none;" @ref="fileInput" />
+                                <MudButton Color="Color.Primary" Variant="Variant.Outlined" @onclick="() => fileInput.OnClick()">
+                                    <MudIcon Icon="@Icons.Material.Filled.Upload" Class="mr-2" />
+                                    Choose Image
+                                </MudButton> *@
+                                <MudFileUpload T="IBrowserFile" Accept=".png, .jpg" FilesChanged="OnFileSelected" MaximumFileCount="1">
+                                    <ActivatorContent>
+                                        <MudButton Variant="Variant.Filled"
+                                        Color="Color.Primary"
+                                        StartIcon="@Icons.Material.Filled.CloudUpload">
+                                            Only image files
+                                        </MudButton>
+                                    </ActivatorContent>
+                                </MudFileUpload>
+
+                                @if (isUploading)
+                                {
+                                    <MudProgressCircular Color="Color.Primary" Indeterminate="true" Class="mt-2" />
+                                    <p class="text-muted mt-2">Uploading...</p>
+                                }
+                            </div>
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudNumericField @bind-Value="Product.Price"
+                        For="@(() => Product.Price)"
+                        T="decimal"
+                        Label="Price"
+                        Required="true"
+                        RequiredError="Price is required"
+                        Min="0"
+                        Step="1"
+                        Adornment="Adornment.Start"
+                        AdornmentText="$"
+                        Variant="Variant.Outlined" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudNumericField @bind-Value="Product.Quantity"
+                        For="@(() => Product.Quantity)"
+                        Label="Initial Quantity"
+                        Required="true"
+                        RequiredError="Quantity is required"
+                        Min="0"
+                        Variant="Variant.Outlined" />
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudSwitch @bind-Value="Product.IsActive"
+                        For="@(() => Product.IsActive)"
+                        Label="Active"
+                        Color="Color.Success"
+                        UnCheckedColor="Color.Error">
+                            @if (Product.IsActive)
+                            {
+                                <MudText Typo="Typo.body2" Color="Color.Success">Product is Active</MudText>
+                            }
+                            else
+                            {
+                                <MudText Typo="Typo.body2" Color="Color.Error">Product is Inactive</MudText>
+                            }
+                        </MudSwitch>
+                    </MudItem>
+                </MudGrid>
+            </MudForm>
+        </MudContainer>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" 
+        Variant="Variant.Filled" 
+        OnClick="Save" 
+        Disabled="@(!isFormValid)">
+            <MudIcon Icon="@(IsEditing ? Icons.Material.Filled.Edit : Icons.Material.Filled.Add)" Class="mr-3" />
+            @(IsEditing ? "Update Product" : "Add Product")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public Products Product { get; set; } = new();
+    [Parameter] public bool IsEditing { get; set; } = false;
+    [Inject] private ICategoryService CategoryService { get; set; } = null!;
+
+    private MudForm form = null!;
+    private bool isFormValid;
+    private string[] errors = { };
+    private InputFile fileInput = null!;
+    private IBrowserFile file;
+    private bool isUploading = false;
+    private List<string> categories = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCategoriesAsync();
+    }
+
+    private async Task LoadCategoriesAsync()
+    {
+        try
+        {
+            categories = await CategoryService.GetCategoryNamesAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading categories: {ex.Message}");
+        }
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+
+    private void Save()
+    {
+        if (isFormValid)
+        {
+            MudDialog.Close(DialogResult.Ok(Product));
+        }
+    }
+
+    private async Task OnFileSelected(IBrowserFile? e)
+    {
+        if (e != null)
+        {
+            isUploading = true;
+            StateHasChanged();
+
+            try
+            {
+                // Convert image to base64 string for storage
+                using var memoryStream = new MemoryStream();
+                await e.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024).CopyToAsync(memoryStream);
+                var imageBytes = memoryStream.ToArray();
+                var base64String = Convert.ToBase64String(imageBytes);
+                
+                // Set the image URL as a data URL
+                Product.ImageUrl = $"data:image/{e.ContentType.Split('/')[1]};base64,{base64String}";
+            }
+            catch (Exception ex)
+            {
+                // Handle error - you might want to show a snackbar or error message
+                Console.WriteLine($"Error uploading image: {ex.Message}");
+            }
+            finally
+            {
+                isUploading = false;
+                StateHasChanged();
+            }
+        }
+    }
+
+    private void RemoveImage()
+    {
+        Product.ImageUrl = null;
+        StateHasChanged();
+    }
+}

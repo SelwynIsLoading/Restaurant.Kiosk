@@ -1,0 +1,514 @@
+@page "/admin/orders"
+@using RestaurantKiosk.Components.Layout
+@using RestaurantKiosk.Data.Entities
+@using RestaurantKiosk.Data.Services
+@using Microsoft.AspNetCore.SignalR.Client
+
+@layout AdminLayout
+
+@attribute [Authorize]
+
+@inject IOrderRepository OrderRepository
+@inject NavigationManager NavigationManager
+@inject ILogger<OrderManagement> Logger
+@implements IAsyncDisposable
+
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="bi bi-receipt-cutoff me-2 text-success"></i>
+                        Kitchen Order Management
+                    </h2>
+                    <p class="text-muted">Real-time order tracking and completion</p>
+                </div>
+                <div>
+                    <button class="btn btn-outline-secondary" @onclick="NavigateToAdmin">
+                        <i class="bi bi-arrow-left me-2"></i>Back to Admin
+                    </button>
+                    <button class="btn btn-primary ms-2" @onclick="RefreshOrders">
+                        <i class="bi bi-arrow-clockwise me-2"></i>Refresh
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Active Orders</h6>
+                            <h3 class="mb-0">@activeOrders.Count</h3>
+                        </div>
+                        <div class="bg-success bg-opacity-10 rounded-circle p-3">
+                            <i class="bi bi-clock-history text-success" style="font-size: 1.5rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Total Items</h6>
+                            <h3 class="mb-0">@totalItems</h3>
+                        </div>
+                        <div class="bg-primary bg-opacity-10 rounded-circle p-3">
+                            <i class="bi bi-bag-check text-primary" style="font-size: 1.5rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Revenue (Active)</h6>
+                            <h3 class="mb-0">₱@totalRevenue.ToString("N2")</h3>
+                        </div>
+                        <div class="bg-info bg-opacity-10 rounded-circle p-3">
+                            <i class="bi bi-cash-stack text-info" style="font-size: 1.5rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Connection</h6>
+                            <span class="badge @GetConnectionBadgeClass()">@connectionStatus</span>
+                        </div>
+                        <div class="bg-warning bg-opacity-10 rounded-circle p-3">
+                            <i class="bi bi-wifi text-warning" style="font-size: 1.5rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Orders List -->
+    @if (isLoading)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3 text-muted">Loading orders...</p>
+        </div>
+    }
+    else if (!activeOrders.Any())
+    {
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-inbox text-muted" style="font-size: 4rem;"></i>
+                <h4 class="mt-3 text-muted">No Active Orders</h4>
+                <p class="text-muted">All orders have been completed. New orders will appear here automatically.</p>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row g-3">
+            @foreach (var order in activeOrders.OrderBy(o => o.CreatedAt))
+            {
+                <div class="col-lg-6 col-xl-4">
+                    <div class="card border-0 shadow-sm h-100 order-card @(processingOrders.Contains(order.Id) ? "processing" : "")">
+                        <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="mb-0">
+                                    <i class="bi bi-receipt me-2"></i>
+                                    Order #@order.OrderNumber
+                                </h5>
+                                <small>@order.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy h:mm tt")</small>
+                            </div>
+                            <span class="badge bg-light text-success">
+                                @GetOrderAge(order.CreatedAt)
+                            </span>
+                        </div>
+                        <div class="card-body">
+                            <!-- Customer Info -->
+                            <div class="mb-3">
+                                <h6 class="text-muted mb-2">
+                                    <i class="bi bi-person-circle me-1"></i>
+                                    Customer Details
+                                </h6>
+                                <div class="ps-3">
+                                    <p class="mb-1"><strong>@order.CustomerName</strong></p>
+                                    @if (!string.IsNullOrEmpty(order.CustomerPhone))
+                                    {
+                                        <p class="mb-1 text-muted small">
+                                            <i class="bi bi-telephone me-1"></i>@order.CustomerPhone
+                                        </p>
+                                    }
+                                    @if (!string.IsNullOrEmpty(order.CustomerEmail))
+                                    {
+                                        <p class="mb-0 text-muted small">
+                                            <i class="bi bi-envelope me-1"></i>@order.CustomerEmail
+                                        </p>
+                                    }
+                                </div>
+                            </div>
+
+                            <hr />
+
+                            <!-- Order Items -->
+                            <div class="mb-3">
+                                <h6 class="text-muted mb-2">
+                                    <i class="bi bi-list-ul me-1"></i>
+                                    Order Items (@order.OrderItems.Count)
+                                </h6>
+                                <div class="order-items">
+                                    @foreach (var item in order.OrderItems)
+                                    {
+                                        <div class="d-flex justify-content-between align-items-start mb-2 p-2 bg-light rounded">
+                                            <div class="flex-grow-1">
+                                                <strong>@item.ProductName</strong>
+                                                <br />
+                                                <small class="text-muted">Qty: @item.Quantity × ₱@item.UnitPrice.ToString("N2")</small>
+                                                @if (!string.IsNullOrEmpty(item.Notes))
+                                                {
+                                                    <br />
+                                                    <small class="text-info">
+                                                        <i class="bi bi-sticky me-1"></i>@item.Notes
+                                                    </small>
+                                                }
+                                            </div>
+                                            <div class="text-end">
+                                                <strong>₱@item.LineTotal.ToString("N2")</strong>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+
+                            <!-- Order Notes -->
+                            @if (!string.IsNullOrEmpty(order.Notes))
+                            {
+                                <div class="alert alert-info mb-3">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    <strong>Special Instructions:</strong>
+                                    <p class="mb-0 mt-1">@order.Notes</p>
+                                </div>
+                            }
+
+                            <!-- Order Summary -->
+                            <div class="border-top pt-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>Subtotal:</span>
+                                    <span>₱@order.SubTotal.ToString("N2")</span>
+                                </div>
+                                @if (order.Tax > 0)
+                                {
+                                    <div class="d-flex justify-content-between mb-1 text-muted small">
+                                        <span>Tax:</span>
+                                        <span>₱@order.Tax.ToString("N2")</span>
+                                    </div>
+                                }
+                                @if (order.ServiceCharge > 0)
+                                {
+                                    <div class="d-flex justify-content-between mb-1 text-muted small">
+                                        <span>Service Charge:</span>
+                                        <span>₱@order.ServiceCharge.ToString("N2")</span>
+                                    </div>
+                                }
+                                <div class="d-flex justify-content-between fw-bold border-top pt-2 mt-2">
+                                    <span>Total:</span>
+                                    <span class="text-success">₱@order.TotalAmount.ToString("N2")</span>
+                                </div>
+                            </div>
+
+                            <!-- Payment Method -->
+                            <div class="mt-2">
+                                <small class="text-muted">
+                                    <i class="bi bi-credit-card me-1"></i>
+                                    Payment: @order.PaymentMethod
+                                </small>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-white border-top">
+                            <button 
+                                class="btn btn-success w-100 btn-lg" 
+                                @onclick="() => MarkAsCompleted(order.Id)"
+                                disabled="@processingOrders.Contains(order.Id)">
+                                @if (processingOrders.Contains(order.Id))
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                    <span>Completing...</span>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-check-circle me-2"></i>
+                                    <span>Mark as Completed</span>
+                                }
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<!-- Custom Styles -->
+<style>
+    .order-card {
+        transition: all 0.3s ease;
+        border-left: 4px solid #198754 !important;
+    }
+
+    .order-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1.5rem rgba(0,0,0,.15) !important;
+    }
+
+    .order-card.processing {
+        opacity: 0.6;
+        pointer-events: none;
+    }
+
+    .order-items {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    .order-items::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .order-items::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+
+    .order-items::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 10px;
+    }
+
+    .order-items::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.35em 0.65em;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .order-card {
+        animation: fadeIn 0.5s ease-out;
+    }
+</style>
+
+@code {
+    private List<Order> activeOrders = new();
+    private HashSet<int> processingOrders = new();
+    private bool isLoading = true;
+    private HubConnection? hubConnection;
+    private string connectionStatus = "Connecting...";
+    
+    private int totalItems => activeOrders.Sum(o => o.OrderItems.Sum(i => i.Quantity));
+    private decimal totalRevenue => activeOrders.Sum(o => o.TotalAmount);
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadOrders();
+        await InitializeSignalR();
+    }
+
+    private async Task LoadOrders()
+    {
+        try
+        {
+            isLoading = true;
+            activeOrders = await OrderRepository.GetActiveOrdersAsync();
+            Logger.LogInformation("Loaded {Count} active orders", activeOrders.Count);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading orders");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task InitializeSignalR()
+    {
+        try
+        {
+            var hubUrl = NavigationManager.ToAbsoluteUri("/orderhub");
+            
+            hubConnection = new HubConnectionBuilder()
+                .WithUrl(hubUrl)
+                .WithAutomaticReconnect()
+                .Build();
+
+            hubConnection.On<int, string>("NewOrder", async (orderId, orderNumber) =>
+            {
+                Logger.LogInformation("Received new order notification: {OrderNumber} (ID: {OrderId})", orderNumber, orderId);
+                await InvokeAsync(async () =>
+                {
+                    await RefreshOrders();
+                    StateHasChanged();
+                });
+            });
+
+            hubConnection.On<int, string>("OrderCompleted", async (orderId, orderNumber) =>
+            {
+                Logger.LogInformation("Received order completed notification: {OrderNumber} (ID: {OrderId})", orderNumber, orderId);
+                await InvokeAsync(async () =>
+                {
+                    await RefreshOrders();
+                    StateHasChanged();
+                });
+            });
+
+            hubConnection.Reconnecting += error =>
+            {
+                connectionStatus = "Reconnecting...";
+                InvokeAsync(StateHasChanged);
+                return Task.CompletedTask;
+            };
+
+            hubConnection.Reconnected += connectionId =>
+            {
+                connectionStatus = "Connected";
+                InvokeAsync(StateHasChanged);
+                return Task.CompletedTask;
+            };
+
+            hubConnection.Closed += error =>
+            {
+                connectionStatus = "Disconnected";
+                InvokeAsync(StateHasChanged);
+                return Task.CompletedTask;
+            };
+
+            await hubConnection.StartAsync();
+            connectionStatus = "Connected";
+            Logger.LogInformation("SignalR connection established");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error initializing SignalR");
+            connectionStatus = "Error";
+        }
+    }
+
+    private async Task MarkAsCompleted(int orderId)
+    {
+        try
+        {
+            processingOrders.Add(orderId);
+            StateHasChanged();
+
+            var success = await OrderRepository.MarkOrderAsCompletedAsync(orderId);
+            
+            if (success)
+            {
+                var order = activeOrders.FirstOrDefault(o => o.Id == orderId);
+                if (order != null)
+                {
+                    // Notify other clients about the completion
+                    if (hubConnection?.State == HubConnectionState.Connected)
+                    {
+                        await hubConnection.SendAsync("NotifyOrderCompleted", orderId, order.OrderNumber);
+                    }
+                    
+                    // Remove from local list with animation
+                    await Task.Delay(500); // Brief delay for visual feedback
+                    activeOrders.Remove(order);
+                }
+                
+                Logger.LogInformation("Order {OrderId} marked as completed", orderId);
+            }
+            else
+            {
+                Logger.LogWarning("Failed to mark order {OrderId} as completed", orderId);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error marking order {OrderId} as completed", orderId);
+        }
+        finally
+        {
+            processingOrders.Remove(orderId);
+            StateHasChanged();
+        }
+    }
+
+    private async Task RefreshOrders()
+    {
+        await LoadOrders();
+        StateHasChanged();
+    }
+
+    private void NavigateToAdmin()
+    {
+        NavigationManager.NavigateTo("/admin", true);
+    }
+
+    private string GetOrderAge(DateTime createdAt)
+    {
+        var age = DateTime.UtcNow - createdAt;
+        
+        if (age.TotalMinutes < 1)
+            return "Just now";
+        else if (age.TotalMinutes < 60)
+            return $"{(int)age.TotalMinutes}m ago";
+        else if (age.TotalHours < 24)
+            return $"{(int)age.TotalHours}h ago";
+        else
+            return $"{(int)age.TotalDays}d ago";
+    }
+
+    private string GetConnectionBadgeClass()
+    {
+        return connectionStatus switch
+        {
+            "Connected" => "bg-success",
+            "Connecting..." => "bg-warning",
+            "Reconnecting..." => "bg-warning",
+            "Disconnected" => "bg-danger",
+            "Error" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.DisposeAsync();
+        }
+    }
+}
+

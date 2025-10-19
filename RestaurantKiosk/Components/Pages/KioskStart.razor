@@ -1,0 +1,50 @@
+@page "/kiosk-start"
+@using RestaurantKiosk.Components.Layout
+@layout KioskLayout
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Restaurant Kiosk - Touch to Start</PageTitle>
+
+<div class="kiosk-start-container">
+    <div class="start-screen">
+        <div class="logo-section">
+            <img src="/imgs/logo.png" alt="Restaurant Logo" class="main-logo" />
+            <h1>Welcome to Our Restaurant</h1>
+            <p class="subtitle">Touch the screen below to begin ordering</p>
+        </div>
+        
+        <div class="start-button-container">
+            <MudButton Variant="Variant.Filled" 
+                      Color="Color.Success" 
+                      Size="Size.Large"
+                      OnClick="StartOrdering"
+                      Class="start-button">
+                <MudIcon Icon="Icons.Material.Filled.TouchApp" Size="Size.Large" />
+                <span>Touch to Start Ordering</span>
+            </MudButton>
+        </div>
+        
+        <div class="features-preview">
+            <div class="feature-item">
+                <MudIcon Icon="Icons.Material.Filled.Restaurant" Size="Size.Medium" />
+                <span>Browse Menu</span>
+            </div>
+            <div class="feature-item">
+                <MudIcon Icon="Icons.Material.Filled.ShoppingCart" Size="Size.Medium" />
+                <span>Add to Cart</span>
+            </div>
+            <div class="feature-item">
+                <MudIcon Icon="Icons.Material.Filled.Payment" Size="Size.Medium" />
+                <span>Easy Checkout</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private void StartOrdering()
+    {
+        NavigationManager.NavigateTo("/kiosk");
+    }
+}

@@ -1,0 +1,431 @@
+/* Kiosk Layout - Modern White and Orange Theme */
+.kiosk-layout {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(135deg, #FFFFFF 0%, #FFF8F0 100%);
+    overflow-x: hidden;
+    position: relative;
+}
+
+.kiosk-layout::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(circle at 10% 20%, rgba(255, 111, 0, 0.05) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(255, 152, 0, 0.05) 0%, transparent 40%),
+        radial-gradient(circle at 50% 50%, rgba(255, 224, 178, 0.08) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.kiosk-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+}
+
+/* Hide the default error UI in kiosk mode */
+#blazor-error-ui {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #F44336, #E53935);
+    color: white;
+    padding: 16px 24px;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(244, 67, 54, 0.4);
+    font-weight: 600;
+    z-index: 10000;
+    display: none;
+}
+
+#blazor-error-ui .reload {
+    color: white;
+    text-decoration: underline;
+    margin-left: 8px;
+    font-weight: 700;
+}
+
+#blazor-error-ui .dismiss {
+    cursor: pointer;
+    margin-left: 12px;
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+/* Ensure full screen experience */
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow-x: hidden;
+    font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+    background: linear-gradient(135deg, #FFFFFF 0%, #FFF8F0 100%);
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/* Custom Scrollbars with Orange Theme - Large for Kiosk */
+::-webkit-scrollbar {
+    width: 20px;
+    height: 20px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255, 224, 178, 0.3);
+    border-radius: 12px;
+    margin: 4px;
+    border: 1px solid rgba(255, 152, 0, 0.1);
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #FF6F00, #FF9800);
+    border-radius: 12px;
+    border: 3px solid rgba(255, 224, 178, 0.3);
+    background-clip: content-box;
+    transition: all 0.3s ease;
+    min-height: 60px;
+    box-shadow: 0 2px 8px rgba(255, 111, 0, 0.3);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #E65100, #F57C00);
+    background-clip: content-box;
+    border: 2px solid rgba(255, 224, 178, 0.3);
+    box-shadow: 0 4px 12px rgba(255, 111, 0, 0.4);
+}
+
+::-webkit-scrollbar-thumb:active {
+    background: linear-gradient(135deg, #E65100, #F57C00);
+    box-shadow: 0 2px 6px rgba(255, 111, 0, 0.5);
+}
+
+::-webkit-scrollbar-corner {
+    background: rgba(255, 224, 178, 0.3);
+    border-radius: 12px;
+}
+
+/* Kiosk-specific optimizations */
+* {
+    -webkit-tap-highlight-color: rgba(255, 111, 0, 0.1);
+    -webkit-touch-callout: none;
+    box-sizing: border-box;
+}
+
+/* Allow text selection in input fields */
+input, textarea, [contenteditable] {
+    -webkit-user-select: text;
+    -khtml-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+}
+
+/* Prevent zoom on double tap */
+* {
+    touch-action: manipulation;
+}
+
+/* MudBlazor Component Overrides for Orange Theme */
+.mud-paper {
+    background: rgba(255, 255, 255, 0.98) !important;
+    backdrop-filter: blur(20px);
+}
+
+.mud-drawer {
+    background: white !important;
+}
+
+.mud-drawer-content {
+    background: #FAFAFA !important;
+}
+
+/* Enhanced Button Styles */
+.mud-button-filled-primary {
+    background: linear-gradient(135deg, #FF6F00, #FF9800) !important;
+    box-shadow: 0 6px 20px rgba(255, 111, 0, 0.35) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mud-button-filled-primary:hover {
+    background: linear-gradient(135deg, #E65100, #F57C00) !important;
+    box-shadow: 0 8px 28px rgba(255, 111, 0, 0.45) !important;
+    transform: translateY(-2px);
+}
+
+.mud-button-filled-primary:active {
+    transform: translateY(0);
+    box-shadow: 0 4px 16px rgba(255, 111, 0, 0.3) !important;
+}
+
+.mud-button-outlined-primary {
+    border-color: #FF6F00 !important;
+    color: #FF6F00 !important;
+}
+
+.mud-button-outlined-primary:hover {
+    background: rgba(255, 111, 0, 0.08) !important;
+    border-color: #E65100 !important;
+}
+
+/* Enhanced Chip Styles */
+.mud-chip-filled.mud-chip-color-primary {
+    background: linear-gradient(135deg, #FF6F00, #FF9800) !important;
+    color: white !important;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(255, 111, 0, 0.3);
+}
+
+.mud-chip-outlined.mud-chip-color-primary {
+    border-color: #FF6F00 !important;
+    color: #FF6F00 !important;
+    font-weight: 600;
+}
+
+.mud-chip-outlined.mud-chip-color-primary:hover {
+    background: rgba(255, 111, 0, 0.08) !important;
+}
+
+/* Badge Styles */
+.mud-badge-dot.mud-badge-color-error {
+    background: #F44336 !important;
+    box-shadow: 0 2px 8px rgba(244, 67, 54, 0.4);
+}
+
+/* Snackbar Customization */
+.mud-snackbar {
+    border-radius: 12px !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
+    font-weight: 500;
+}
+
+.mud-snackbar-content-message {
+    font-size: 1rem;
+}
+
+.mud-alert.mud-alert-filled-success {
+    background: linear-gradient(135deg, #4CAF50, #66BB6A) !important;
+}
+
+.mud-alert.mud-alert-filled-error {
+    background: linear-gradient(135deg, #F44336, #EF5350) !important;
+}
+
+.mud-alert.mud-alert-filled-warning {
+    background: linear-gradient(135deg, #FFC107, #FFD54F) !important;
+}
+
+.mud-alert.mud-alert-filled-info {
+    background: linear-gradient(135deg, #FF6F00, #FF9800) !important;
+}
+
+/* Progress Indicator */
+.mud-progress-circular svg circle {
+    stroke: url(#orangeGradient) !important;
+}
+
+/* Card Enhancements */
+.mud-card {
+    border-radius: 16px !important;
+    transition: all 0.3s ease;
+}
+
+.mud-card:hover {
+    transform: translateY(-4px);
+}
+
+/* Input Field Customization */
+.mud-input-label-text {
+    color: #757575 !important;
+}
+
+.mud-input-root:focus-within .mud-input-label-text {
+    color: #FF6F00 !important;
+}
+
+.mud-input-outlined:focus-within .mud-input-outlined-border {
+    border-color: #FF6F00 !important;
+    border-width: 2px !important;
+}
+
+.mud-input-underline:after {
+    border-bottom-color: #FF6F00 !important;
+}
+
+/* Divider Styling */
+.mud-divider {
+    border-color: rgba(255, 224, 178, 0.5) !important;
+}
+
+/* Kiosk-specific focus styles */
+.kiosk-layout *:focus-visible {
+    outline: 3px solid #FF9800 !important;
+    outline-offset: 2px;
+    border-radius: 8px;
+}
+
+/* Enhanced touch feedback */
+.kiosk-layout button:active,
+.kiosk-layout .mud-button:active,
+.kiosk-layout .mud-icon-button:active {
+    transform: scale(0.96);
+    transition: transform 0.1s ease;
+}
+
+/* Kiosk loading screen */
+.kiosk-loading {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #FFFFFF 0%, #FFF8F0 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.kiosk-loading h1 {
+    font-size: 3rem;
+    font-weight: 800;
+    margin-bottom: 2rem;
+    background: linear-gradient(135deg, #FF6F00, #FF9800);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.kiosk-loading .loading-spinner {
+    width: 80px;
+    height: 80px;
+    border: 6px solid rgba(255, 224, 178, 0.3);
+    border-top: 6px solid #FF6F00;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+/* Gradient SVG Definition for Progress Indicators */
+svg defs {
+    display: none;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    ::-webkit-scrollbar {
+        width: 16px;
+        height: 16px;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        min-height: 40px;
+    }
+    
+    .kiosk-loading h1 {
+        font-size: 2rem;
+    }
+    
+    .kiosk-loading .loading-spinner {
+        width: 60px;
+        height: 60px;
+        border-width: 4px;
+    }
+}
+
+/* Accessibility - High Contrast Mode */
+@media (prefers-contrast: high) {
+    .kiosk-layout {
+        background: white;
+    }
+    
+    .kiosk-layout::before {
+        display: none;
+    }
+    
+    .mud-button-filled-primary {
+        background: #FF6F00 !important;
+        border: 2px solid #000000;
+    }
+    
+    .mud-chip-filled.mud-chip-color-primary {
+        background: #FF6F00 !important;
+        border: 2px solid #000000;
+    }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+    .kiosk-layout::before,
+    .mud-card,
+    .mud-button-filled-primary,
+    .kiosk-loading h1,
+    .kiosk-loading .loading-spinner {
+        animation: none !important;
+        transition: none !important;
+    }
+    
+    .kiosk-layout button:active,
+    .kiosk-layout .mud-button:active,
+    .kiosk-layout .mud-icon-button:active {
+        transform: none;
+    }
+}
+
+/* Dark Mode Support (if needed) */
+@media (prefers-color-scheme: dark) {
+    .kiosk-layout {
+        background: linear-gradient(135deg, #212121 0%, #424242 100%);
+    }
+    
+    .mud-paper {
+        background: rgba(66, 66, 66, 0.98) !important;
+    }
+    
+    body {
+        background: #212121;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .kiosk-layout {
+        background: white;
+    }
+    
+    .kiosk-layout::before {
+        display: none;
+    }
+    
+    #blazor-error-ui {
+        display: none !important;
+    }
+}

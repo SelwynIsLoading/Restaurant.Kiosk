@@ -1,0 +1,57 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <UserSecretsId>aspnet-RestaurantKiosk-15621f00-b203-4349-94fd-c398e300cbad</UserSecretsId>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="9.0.9" />
+        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.9" />
+        <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.9" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.9">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="MudBlazor" Version="8.12.0" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
+        <PackageReference Include="Xendit.net" Version="1.1.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="publish-vps\appsettings.Development.json" />
+      <_ContentIncludedByDefault Remove="publish-vps\appsettings.json" />
+      <_ContentIncludedByDefault Remove="publish-vps\cash_reader_config.example.json" />
+      <_ContentIncludedByDefault Remove="publish-vps\cash_reader_config.json" />
+      <_ContentIncludedByDefault Remove="publish-vps\cash_reader_config.production.example.json" />
+      <_ContentIncludedByDefault Remove="publish-vps\publish-vps\appsettings.Development.json" />
+      <_ContentIncludedByDefault Remove="publish-vps\publish-vps\appsettings.json" />
+      <_ContentIncludedByDefault Remove="publish-vps\publish-vps\cash_reader_config.example.json" />
+      <_ContentIncludedByDefault Remove="publish-vps\publish-vps\cash_reader_config.json" />
+      <_ContentIncludedByDefault Remove="publish-vps\publish-vps\cash_reader_config.production.example.json" />
+      <_ContentIncludedByDefault Remove="publish-vps\publish-vps\publish-vps\appsettings.Development.json" />
+      <_ContentIncludedByDefault Remove="publish-vps\publish-vps\publish-vps\appsettings.json" />
+      <_ContentIncludedByDefault Remove="publish-vps\publish-vps\publish-vps\publish-vps\appsettings.Development.json" />
+      <_ContentIncludedByDefault Remove="publish-vps\publish-vps\publish-vps\publish-vps\appsettings.json" />
+      <_ContentIncludedByDefault Remove="publish-vps\publish-vps\publish-vps\publish-vps\publish-vps\appsettings.Development.json" />
+      <_ContentIncludedByDefault Remove="publish-vps\publish-vps\publish-vps\publish-vps\publish-vps\appsettings.json" />
+      <_ContentIncludedByDefault Remove="publish-vps\publish-vps\publish-vps\publish-vps\publish-vps\RestaurantKiosk.deps.json" />
+      <_ContentIncludedByDefault Remove="publish-vps\publish-vps\publish-vps\publish-vps\publish-vps\RestaurantKiosk.runtimeconfig.json" />
+      <_ContentIncludedByDefault Remove="publish-vps\publish-vps\publish-vps\publish-vps\publish-vps\RestaurantKiosk.staticwebassets.endpoints.json" />
+      <_ContentIncludedByDefault Remove="publish-vps\publish-vps\publish-vps\publish-vps\RestaurantKiosk.deps.json" />
+      <_ContentIncludedByDefault Remove="publish-vps\publish-vps\publish-vps\publish-vps\RestaurantKiosk.runtimeconfig.json" />
+      <_ContentIncludedByDefault Remove="publish-vps\publish-vps\publish-vps\publish-vps\RestaurantKiosk.staticwebassets.endpoints.json" />
+      <_ContentIncludedByDefault Remove="publish-vps\publish-vps\publish-vps\RestaurantKiosk.deps.json" />
+      <_ContentIncludedByDefault Remove="publish-vps\publish-vps\publish-vps\RestaurantKiosk.runtimeconfig.json" />
+      <_ContentIncludedByDefault Remove="publish-vps\publish-vps\publish-vps\RestaurantKiosk.staticwebassets.endpoints.json" />
+      <_ContentIncludedByDefault Remove="publish-vps\publish-vps\RestaurantKiosk.deps.json" />
+      <_ContentIncludedByDefault Remove="publish-vps\publish-vps\RestaurantKiosk.runtimeconfig.json" />
+      <_ContentIncludedByDefault Remove="publish-vps\publish-vps\RestaurantKiosk.staticwebassets.endpoints.json" />
+      <_ContentIncludedByDefault Remove="publish-vps\RestaurantKiosk.deps.json" />
+      <_ContentIncludedByDefault Remove="publish-vps\RestaurantKiosk.runtimeconfig.json" />
+      <_ContentIncludedByDefault Remove="publish-vps\RestaurantKiosk.staticwebassets.endpoints.json" />
+    </ItemGroup>
+
+</Project>

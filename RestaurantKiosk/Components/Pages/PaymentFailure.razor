@@ -1,0 +1,165 @@
+@page "/payment/failure"
+@layout KioskLayout
+@using RestaurantKiosk.Data.Services
+@using RestaurantKiosk.Data.Entities
+@using RestaurantKiosk.Components.Layout
+@inject NavigationManager NavigationManager
+@inject IOrderService OrderService
+@inject IOrderRepository OrderRepository
+@inject ICurrencyService CurrencyService
+@inject IJSRuntime JSRuntime
+@inject ILogger<PaymentFailure> Logger
+@rendermode InteractiveServer
+
+<PageTitle>Payment Failed - Restaurant Kiosk</PageTitle>
+
+<div class="payment-result-container">
+    <div class="payment-result-content">
+        <div class="failure-icon">
+            <MudIcon Icon="Icons.Material.Filled.Error" 
+                     Color="Color.Error" 
+                     Size="Size.Large" 
+                     Style="font-size: 4rem;" />
+        </div>
+        
+        <h1 class="failure-title">Payment Failed</h1>
+        
+        <p class="failure-message">
+            We're sorry, but your payment could not be processed. Please try again or choose a different payment method.
+        </p>
+        
+        <div class="order-details">
+            <h3>Order Summary</h3>
+            @if (order != null)
+            {
+                <div class="order-info">
+                    <p><strong>Order Number:</strong> @order.OrderNumber</p>
+                    <p><strong>Payment Method:</strong> @order.PaymentMethod</p>
+                </div>
+                <div class="order-items">
+                    @foreach (var item in order.OrderItems)
+                    {
+                        <div class="order-item">
+                            <span class="item-name">@item.ProductName</span>
+                            <span class="item-quantity">x @item.Quantity</span>
+                            <span class="item-price">@CurrencyService.FormatPeso(item.LineTotal)</span>
+                        </div>
+                    }
+                </div>
+                
+                <div class="order-total">
+                    <p>Subtotal: @CurrencyService.FormatPeso(order.SubTotal)</p>
+                    <p>VAT (12%): @CurrencyService.FormatPeso(order.Tax)</p>
+                    <strong>Total: @CurrencyService.FormatPeso(order.TotalAmount)</strong>
+                </div>
+            }
+            else if (isLoading)
+            {
+                <div class="loading-message">
+                    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+                    <p>Loading order details...</p>
+                </div>
+            }
+            else
+            {
+                <div class="error-message">
+                    <p>Unable to retrieve order details.</p>
+                </div>
+            }
+        </div>
+        
+        <div class="troubleshooting">
+            <h3>Common Solutions</h3>
+            <ul>
+                <li>Check your internet connection</li>
+                <li>Verify your payment method details</li>
+                <li>Ensure sufficient funds are available</li>
+                <li>Try a different payment method</li>
+            </ul>
+        </div>
+        
+        <div class="action-buttons">
+            <MudButton Variant="Variant.Filled"
+                      Color="Color.Primary"
+                      Size="Size.Large"
+                      OnClick="RetryPayment"
+                      Class="retry-btn">
+                <MudIcon Icon="Icons.Material.Filled.Refresh" />
+                Try Again
+            </MudButton>
+            
+            <MudButton Variant="Variant.Outlined"
+                      Color="Color.Secondary"
+                      Size="Size.Large"
+                      OnClick="BackToCheckout"
+                      Class="back-btn">
+                <MudIcon Icon="Icons.Material.Filled.ArrowBack" />
+                Back to Checkout
+            </MudButton>
+        </div>
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromQuery(Name = "external_id")]
+    public string? ExternalId { get; set; }
+
+    private Order? order;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Logger.LogInformation("PaymentFailure page loaded with ExternalId: {ExternalId}", ExternalId);
+        
+        if (!string.IsNullOrEmpty(ExternalId))
+        {
+            try
+            {
+                // Retrieve order from database using ExternalId
+                order = await OrderRepository.GetOrderByExternalIdAsync(ExternalId);
+                
+                if (order != null)
+                {
+                    Logger.LogInformation("Order {OrderNumber} retrieved successfully", order.OrderNumber);
+                    
+                    // Update order status to PaymentFailed
+                    await OrderRepository.UpdateOrderStatusAsync(ExternalId, OrderStatus.PaymentFailed);
+                }
+                else
+                {
+                    Logger.LogWarning("No order found with ExternalId: {ExternalId}", ExternalId);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error retrieving order with ExternalId: {ExternalId}", ExternalId);
+            }
+        }
+        else
+        {
+            Logger.LogWarning("PaymentFailure page accessed without ExternalId");
+        }
+        
+        isLoading = false;
+        
+        // Show failure notification
+        if (order != null)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Payment failed for order {order.OrderNumber}. Please try again or choose a different payment method.");
+        }
+        else
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Payment failed. Please try again or choose a different payment method.");
+        }
+    }
+
+    private void RetryPayment()
+    {
+        NavigationManager.NavigateTo("/checkout");
+    }
+
+    private void BackToCheckout()
+    {
+        NavigationManager.NavigateTo("/checkout");
+    }
+}

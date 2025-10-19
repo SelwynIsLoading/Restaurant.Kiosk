@@ -1,0 +1,168 @@
+@inherits LayoutComponentBase
+@inject IJSRuntime JSRuntime
+
+@* Custom Orange Theme *@
+<MudThemeProvider Theme="@_customTheme" />
+<MudPopoverProvider />
+
+@* Needed for dialogs *@
+<MudDialogProvider />
+
+@* Needed for snackbars *@
+<MudSnackbarProvider />
+
+<div class="kiosk-layout">
+    <main class="kiosk-main">
+        @Body
+    </main>
+</div>
+
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
+</div>
+
+<script src="/js/kiosk-touch.js"></script>
+
+@code {
+    private readonly MudTheme _customTheme = new()
+    {
+        PaletteLight = new PaletteLight()
+        {
+            Primary = "#FF6F00", // Deep Orange
+            PrimaryDarken = "#E65100",
+            PrimaryLighten = "#FF9800",
+            Secondary = "#FFA726", // Light Orange
+            SecondaryDarken = "#F57C00",
+            SecondaryLighten = "#FFB74D",
+            Tertiary = "#FFCC80",
+            TertiaryDarken = "#FFB74D",
+            TertiaryLighten = "#FFE0B2",
+            Info = "#FF9800",
+            Success = "#4CAF50",
+            Warning = "#FFC107",
+            Error = "#F44336",
+            Dark = "#424242",
+            DarkLighten = "#616161",
+            DarkDarken = "#212121",
+            TextPrimary = "#212121",
+            TextSecondary = "#757575",
+            TextDisabled = "#BDBDBD",
+            ActionDefault = "#212121",
+            ActionDisabled = "#BDBDBD",
+            ActionDisabledBackground = "#EEEEEE",
+            Background = "#FFFFFF",
+            BackgroundGray = "#FAFAFA",
+            Surface = "#FFFFFF",
+            DrawerBackground = "#FFFFFF",
+            DrawerText = "#212121",
+            DrawerIcon = "#757575",
+            AppbarBackground = "#FFFFFF",
+            AppbarText = "#212121",
+            LinesDefault = "#E0E0E0",
+            LinesInputs = "#BDBDBD",
+            TableLines = "#E0E0E0",
+            TableStriped = "#FFF3E0",
+            Divider = "#E0E0E0",
+            DividerLight = "#F5F5F5",
+            HoverOpacity = 0.08,
+            GrayDefault = "#9E9E9E",
+            GrayLight = "#E0E0E0",
+            GrayLighter = "#F5F5F5",
+            GrayDark = "#616161",
+            GrayDarker = "#424242",
+            OverlayDark = "rgba(33,33,33,0.4980392156862745)",
+            OverlayLight = "rgba(255,255,255,0.4980392156862745)"
+        },
+        LayoutProperties = new LayoutProperties()
+        {
+            DefaultBorderRadius = "12px"
+        },
+        Typography = new Typography()
+        {
+            Default =
+            {
+                FontFamily = new[] { "Roboto", "Helvetica", "Arial", "sans-serif" },
+                FontSize = "1rem",
+                FontWeight = "400",
+                LineHeight = "1.5",
+                LetterSpacing = "normal"
+            },
+            H1 = 
+            {
+                FontSize = "3rem",
+                FontWeight = "700",
+                LineHeight = "1.2"
+            },
+            H2 = 
+            {
+                FontSize = "2.5rem",
+                FontWeight = "700",
+                LineHeight = "1.3"
+            },
+            H3 =
+            {
+                FontSize = "2rem",
+                FontWeight = "600",
+                LineHeight = "1.35"
+            },
+            H4 =
+            {
+                FontSize = "1.75rem",
+                FontWeight = "600",
+                LineHeight = "1.4"
+            },
+            H5 = 
+            {
+                FontSize = "1.5rem",
+                FontWeight = "600",
+                LineHeight = "1.4"
+            },
+            H6 =
+            {
+                FontSize = "1.25rem",
+                FontWeight = "600",
+                LineHeight = "1.5"
+            },
+            Button =
+            {
+                FontSize = "1rem",
+                FontWeight = "600",
+                LineHeight = "1.75",
+                LetterSpacing = "0.02857em",
+                TextTransform = "none"
+            },
+            Body1 =
+            {
+                FontSize = "1rem",
+                FontWeight = "400",
+                LineHeight = "1.5"
+            },
+            Body2 =
+            {
+                FontSize = "0.875rem",
+                FontWeight = "400",
+                LineHeight = "1.43"
+            },
+            Caption = 
+            {
+                FontSize = "0.75rem",
+                FontWeight = "400",
+                LineHeight = "1.66"
+            },
+            Subtitle1 = 
+            {
+                FontSize = "1rem",
+                FontWeight = "500",
+                LineHeight = "1.75"
+            },
+            Subtitle2 =
+            {
+                FontSize = "0.875rem",
+                FontWeight = "500",
+                LineHeight = "1.57"
+            }
+        }
+    };
+}

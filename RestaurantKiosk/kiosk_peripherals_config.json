@@ -1,0 +1,19 @@
+{
+    "vps_api_url": "http://localhost:5000",
+    "arduino_port": "/dev/ttyUSB0",
+    "arduino_baud_rate": 9600,
+    "printer_type": "serial",  # serial, usb, network, file
+    "printer_serial_port": "/dev/ttyUSB0",
+    "printer_serial_baudrate": 9600,
+    "printer_usb_vendor_id": "0x04b8",
+    "printer_usb_product_id": "0x0e15",
+    "reconnect_delay_seconds": 5,
+    "connection_timeout_seconds": 10,
+    "retry_attempts": 3,
+    "cash_poll_interval": 5,
+    "printer_poll_interval": 2,
+    "api_key": None,
+    "environment": "development",
+    "enable_cash_reader": True,
+    "enable_printer": True
+}

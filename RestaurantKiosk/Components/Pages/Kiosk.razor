@@ -1,0 +1,441 @@
+@page "/kiosk"
+@layout KioskLayout
+@using RestaurantKiosk.Components.Layout
+@using RestaurantKiosk.Data.Entities
+@using RestaurantKiosk.Data.Services
+@inject IProductService ProductService
+@inject ICategoryService CategoryService
+@inject IOrderService OrderService
+@inject ICurrencyService CurrencyService
+@inject ISnackbar Snackbar
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Restaurant Kiosk - Order Now</PageTitle>
+
+<div class="kiosk-container">
+<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="pa-6"  Style="position: relative; z-index: 1;">
+    <!-- Header -->
+    <MudPaper Elevation="8" Class="pa-5 mb-5 kiosk-header-card" Style="background: linear-gradient(135deg, #FFFFFF 0%, #FFF8F0 100%); border-radius: 20px; border: 2px solid #FFE0B2;">
+        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="4">
+                <MudAvatar Size="Size.Large" Style="width: 80px; height: 80px; background: linear-gradient(135deg, #FF6F00, #FF9800); box-shadow: 0 8px 24px rgba(255, 111, 0, 0.3);">
+                    <MudImage Src="/imgs/logo.png" Alt="Restaurant Logo" Style="width: 100%; height: 100%; object-fit: cover;" />
+                </MudAvatar>
+                <div>
+                    <MudText Typo="Typo.h3" Style="font-weight: 800; background: linear-gradient(135deg, #FF6F00, #FF9800); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        Welcome to Bochogs' Diner
+                    </MudText>
+                    <MudText Typo="Typo.body1" Color="Color.Secondary" Style="margin-top: 4px;">
+                        Delicious food at your fingertips
+                    </MudText>
+                </div>
+            </MudStack>
+            <MudBadge Content="@OrderService.GetCartItemCount()" 
+                      Color="Color.Error" 
+                      Overlap="true" 
+                      Origin="Origin.TopRight"
+                      Bordered="true"
+                      Style="transform: scale(1.2);">
+                <MudButton Variant="Variant.Filled" 
+                          Color="Color.Primary" 
+                          Size="Size.Large"
+                          OnClick="ToggleCart"
+                          StartIcon="@Icons.Material.Filled.ShoppingCart"
+                          Style="padding: 16px 32px; border-radius: 50px; font-size: 1.1rem; font-weight: 700; box-shadow: 0 8px 24px rgba(255, 111, 0, 0.4); text-transform: uppercase; letter-spacing: 0.5px;">
+                    <MudText Typo="Typo.button" Style="font-weight: 700;">View Orders</MudText>
+                </MudButton>
+            </MudBadge>
+        </MudStack>
+    </MudPaper>
+
+    <!-- Category Navigation -->
+    <MudPaper Elevation="6" Class="pa-4 mb-5" Style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); border-radius: 20px; border: 1px solid #FFE0B2;">
+        <MudText Typo="Typo.h6" Class="mb-3" Style="font-weight: 700; color: #FF6F00; text-transform: uppercase; letter-spacing: 1px;">
+            <MudIcon Icon="@Icons.Material.Filled.Restaurant" Class="me-2" />
+            Browse Categories
+        </MudText>
+        <MudChipSet T="string" @bind-SelectedChip="selectedChip" Filter="true" Mandatory="false">
+            <MudChip T="string" 
+                    Text="All Items" 
+                    Color="Color.Primary" 
+                    Size="Size.Large"
+                    Variant="@(SelectedCategory == null ? Variant.Filled : Variant.Outlined)"
+                    OnClick="() => SelectCategory(null)"
+                    Style="font-weight: 600; padding: 12px 24px; border-radius: 25px; font-size: 1rem;">
+                All Items
+            </MudChip>
+            @foreach (var category in Categories)
+            {
+                <MudChip T="string" 
+                        Text="@category.Name" 
+                        Color="Color.Primary" 
+                        Size="Size.Large"
+                        Variant="@(SelectedCategory == category.Name ? Variant.Filled : Variant.Outlined)"
+                        OnClick="() => SelectCategory(category.Name)"
+                        Style="font-weight: 600; padding: 12px 24px; border-radius: 25px; font-size: 1rem;">
+                    @category.Name
+                </MudChip>
+            }
+        </MudChipSet>
+    </MudPaper>
+
+    <!-- Products Grid -->
+    @if (IsLoading)
+    {
+        <MudGrid Justify="Justify.Center" Class="pa-8">
+            <MudItem xs="12" Class="text-center">
+                <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" Style="width: 80px; height: 80px;" />
+                <MudText Typo="Typo.h5" Class="mt-4" Style="color: #FF6F00; font-weight: 600;">Loading delicious menu items...</MudText>
+                <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mt-2">Please wait a moment</MudText>
+            </MudItem>
+        </MudGrid>
+    }
+    else if (FilteredProducts.Any())
+    {
+        <MudGrid Spacing="5">
+            @foreach (var product in FilteredProducts)
+            {
+                <MudItem xs="12" sm="6" md="4" lg="3">
+                    <MudCard Elevation="8" 
+                             Class="h-100 product-card-modern" 
+                             Style="border-radius: 20px; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: 2px solid transparent;">
+                        @if (!string.IsNullOrEmpty(product.ImageUrl))
+                        {
+                            <div style="position: relative; overflow: hidden; height: 220px;">
+                                <MudCardMedia Image="@product.ImageUrl" Height="220" Style="transition: transform 0.3s ease;" />
+                                <div style="position: absolute; top: 12px; right: 12px;">
+                                    @if (product.Quantity > 0)
+                                    {
+                                        <MudChip T="string" 
+                                                Color="Color.Success" 
+                                                Size="Size.Small" 
+                                                Style="font-weight: 700; box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);">
+                                            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small" Class="me-1" />
+                                            In Stock
+                                        </MudChip>
+                                    }
+                                    else
+                                    {
+                                        <MudChip T="string" 
+                                                Color="Color.Error" 
+                                                Size="Size.Small" 
+                                                Style="font-weight: 700; box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);">
+                                            <MudIcon Icon="@Icons.Material.Filled.Cancel" Size="Size.Small" Class="me-1" />
+                                            Out of Stock
+                                        </MudChip>
+                                    }
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <MudCardContent Class="d-flex align-center justify-center" 
+                                          Style="height: 220px; background: linear-gradient(135deg, #FFF8F0 0%, #FFE0B2 100%);">
+                                <MudIcon Icon="@Icons.Material.Filled.Restaurant" 
+                                        Size="Size.Large" 
+                                        Color="Color.Primary" 
+                                        Style="font-size: 4rem;" />
+                            </MudCardContent>
+                        }
+                        <MudCardContent Style="padding: 20px; background: linear-gradient(to bottom, #FFFFFF 0%, #FAFAFA 100%);">
+                            <MudText Typo="Typo.h6" 
+                                    Class="mb-2" 
+                                    Style="font-weight: 700; color: #212121; line-height: 1.3;">
+                                @product.Name
+                            </MudText>
+                            <MudText Typo="Typo.body2" 
+                                    Color="Color.Secondary" 
+                                    Class="mb-3" 
+                                    Style="min-height: 40px; line-height: 1.5;">
+                                @product.Description
+                            </MudText>
+                            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mt-3">
+                                <MudText Typo="Typo.h5" 
+                                        Style="font-weight: 800; background: linear-gradient(135deg, #FF6F00, #FF9800); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                                    @CurrencyService.FormatPeso(product.Price)
+                                </MudText>
+                                @if (product.Quantity > 0)
+                                {
+                                    <MudText Typo="Typo.caption" Color="Color.Success" Style="font-weight: 600;">
+                                        @product.Quantity left
+                                    </MudText>
+                                }
+                            </MudStack>
+                        </MudCardContent>
+                        <MudCardActions Style="padding: 16px; background: #FAFAFA;">
+                            @if (product.Quantity > 0)
+                            {
+                                <MudButton Variant="Variant.Filled" 
+                                          Color="Color.Primary" 
+                                          FullWidth="true"
+                                          Size="Size.Large"
+                                          OnClick="() => AddToCart(product)"
+                                          StartIcon="@Icons.Material.Filled.AddShoppingCart"
+                                          Style="border-radius: 50px; padding: 14px 28px; font-weight: 700; box-shadow: 0 6px 20px rgba(255, 111, 0, 0.35); text-transform: uppercase; letter-spacing: 0.5px;">
+                                    Add to Cart
+                                </MudButton>
+                            }
+                            else
+                            {
+                                <MudButton Variant="Variant.Outlined" 
+                                          Color="Color.Error" 
+                                          FullWidth="true"
+                                          Size="Size.Large"
+                                          Disabled="true"
+                                          Style="border-radius: 50px; padding: 14px 28px; font-weight: 700;">
+                                    Out of Stock
+                                </MudButton>
+                            }
+                        </MudCardActions>
+                    </MudCard>
+                </MudItem>
+            }
+        </MudGrid>
+    }
+    else
+    {
+        <MudPaper Elevation="6" Class="pa-10 text-center" Style="border-radius: 20px; background: linear-gradient(135deg, #FFF8F0 0%, #FFE0B2 100%);">
+            <MudIcon Icon="@Icons.Material.Filled.SearchOff" Size="Size.Large" Style="font-size: 5rem; color: #FF9800; margin-bottom: 24px;" />
+            <MudText Typo="Typo.h4" Style="color: #FF6F00; font-weight: 700; margin-bottom: 12px;">No items available</MudText>
+            <MudText Typo="Typo.h6" Color="Color.Secondary" Class="mb-4">No items found in this category</MudText>
+            <MudButton Variant="Variant.Filled" 
+                      Color="Color.Primary" 
+                      Size="Size.Large"
+                      OnClick="() => SelectCategory(null)"
+                      StartIcon="@Icons.Material.Filled.RestaurantMenu"
+                      Style="border-radius: 50px; padding: 14px 32px; font-weight: 700;">
+                Browse All Items
+            </MudButton>
+        </MudPaper>
+    }
+</MudContainer>
+</div>
+
+<!-- Shopping Cart Drawer -->
+<MudDrawer @bind-Open="CartOpen" 
+           Anchor="Anchor.End" 
+           Variant="@DrawerVariant.Temporary"
+           Width="480px"
+           Elevation="16">
+    <MudDrawerHeader Style="background: linear-gradient(135deg, #FF6F00, #FF9800); padding: 24px;">
+        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="flex-grow-1">
+            <MudStack Row="false" Spacing="1">
+                <MudText Typo="Typo.h5" Style="color: white; font-weight: 700;">
+                    <MudIcon Icon="@Icons.Material.Filled.ShoppingCart" Class="me-2" Style="color: white;" />
+                    Orders
+                </MudText>
+                <MudText Typo="Typo.body2" Style="color: rgba(255,255,255,0.9);">
+                    @OrderService.GetCartItemCount() item(s) in your orders
+                </MudText>
+            </MudStack>
+            <MudIconButton Icon="@Icons.Material.Filled.Close" 
+                          OnClick="ToggleCart" 
+                          Style="color: white;"
+                          Size="Size.Large" />
+        </MudStack>
+    </MudDrawerHeader>
+    
+    <MudDivider Style="border-color: #FFE0B2;" />
+    
+    <MudContainer Style="max-height: calc(100vh - 300px); overflow-y: auto; padding: 20px; background: #FAFAFA;">
+        @if (OrderService.HasItems())
+        {
+            <MudStack Spacing="3">
+                @foreach (var item in OrderService.GetCartItems())
+                {
+                    <MudPaper Elevation="4" 
+                             Class="pa-4" 
+                             Style="border-radius: 16px; border: 2px solid #FFE0B2; background: white; transition: all 0.3s ease;">
+                        <MudStack Spacing="3">
+                            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Start">
+                                <MudStack Spacing="1" Class="flex-grow-1">
+                                    <MudText Typo="Typo.subtitle1" Style="font-weight: 700; color: #212121;">
+                                        @item.Product.Name
+                                    </MudText>
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                        @CurrencyService.FormatPeso(item.Product.Price) each
+                                    </MudText>
+                                </MudStack>
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                              OnClick="() => RemoveFromCart(item.Product.Id)"
+                                              Color="Color.Error"
+                                              Size="Size.Medium"
+                                              Style="box-shadow: 0 2px 8px rgba(244, 67, 54, 0.2);" />
+                            </MudStack>
+                            <MudDivider Style="border-color: #FFE0B2;" />
+                            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                                <MudButtonGroup Color="Color.Primary" 
+                                               Variant="Variant.Filled" 
+                                               Size="Size.Medium"
+                                               Style="border-radius: 50px; overflow: hidden; box-shadow: 0 4px 12px rgba(255, 111, 0, 0.3);">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Remove" 
+                                                  OnClick="() => UpdateQuantity(item.Product.Id, item.Quantity - 1)"
+                                                  Style="background: #FF9800; color: white;" />
+                                    <MudButton Disabled="false" 
+                                              Style="background: white; color: #FF6F00; font-weight: 700; min-width: 50px; border-left: 2px solid #FFE0B2; border-right: 2px solid #FFE0B2;">
+                                        @item.Quantity
+                                    </MudButton>
+                                    <MudIconButton Icon="@Icons.Material.Filled.Add" 
+                                                  OnClick="() => UpdateQuantity(item.Product.Id, item.Quantity + 1)"
+                                                  Style="background: #FF9800; color: white;" />
+                                </MudButtonGroup>
+                                <MudText Typo="Typo.h6" Style="font-weight: 800; background: linear-gradient(135deg, #FF6F00, #FF9800); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                                    @CurrencyService.FormatPeso(item.Product.Price * item.Quantity)
+                                </MudText>
+                            </MudStack>
+                        </MudStack>
+                    </MudPaper>
+                }
+            </MudStack>
+        }
+        else
+        {
+            <MudPaper Elevation="0" Class="pa-10 text-center" Style="background: transparent;">
+                <MudIcon Icon="@Icons.Material.Filled.ShoppingCartCheckout" 
+                        Size="Size.Large" 
+                        Style="font-size: 5rem; color: #E0E0E0; margin-bottom: 16px;" />
+                <MudText Typo="Typo.h6" Color="Color.Secondary" Class="mt-3" Style="font-weight: 600;">Your order is empty</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">Add delicious items from our menu</MudText>
+            </MudPaper>
+        }
+    </MudContainer>
+    
+    @if (OrderService.HasItems())
+    {
+        <MudDivider Style="border-color: #FFE0B2;" />
+        <MudPaper Elevation="8" 
+                 Class="pa-4" 
+                 Style="background: linear-gradient(to bottom, white 0%, #FFF8F0 100%); border-top: 3px solid #FFE0B2;">
+            <MudStack Spacing="4">
+                <MudPaper Elevation="2" Class="pa-3" Style="background: #FFF8F0; border-radius: 12px; border: 1px solid #FFE0B2;">
+                    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                        <MudText Typo="Typo.h6" Style="font-weight: 700; color: #212121;">Total Amount:</MudText>
+                        <MudText Typo="Typo.h4" Style="font-weight: 800; background: linear-gradient(135deg, #FF6F00, #FF9800); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                            @CurrencyService.FormatPeso(OrderService.GetCartTotal())
+                        </MudText>
+                    </MudStack>
+                </MudPaper>
+                <MudButton Variant="Variant.Filled" 
+                          Color="Color.Success" 
+                          Size="Size.Large"
+                          FullWidth="true"
+                          OnClick="ProceedToCheckout"
+                          StartIcon="@Icons.Material.Filled.CheckCircle"
+                          Style="border-radius: 50px; padding: 18px 32px; font-weight: 700; font-size: 1.1rem; box-shadow: 0 8px 24px rgba(76, 175, 80, 0.4); text-transform: uppercase; letter-spacing: 0.5px;">
+                    Proceed to Checkout
+                </MudButton>
+            </MudStack>
+        </MudPaper>
+    }
+</MudDrawer>
+
+@code {
+    private List<Products> AllProducts = new();
+    private List<Products> FilteredProducts = new();
+    private List<Category> Categories = new();
+    private string? SelectedCategory;
+    private bool IsLoading = true;
+    private bool CartOpen = false;
+    private MudChip<string>? selectedChip;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        IsLoading = true;
+        try
+        {
+            AllProducts = await ProductService.GetAllProductsAsync();
+            Categories = await CategoryService.GetAllCategoriesAsync();
+            FilterProducts();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading menu: {ex.Message}", Severity.Error);
+            Console.WriteLine($"Error loading data: {ex.Message}");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private void SelectCategory(string? category)
+    {
+        SelectedCategory = category;
+        FilterProducts();
+    }
+
+    private void FilterProducts()
+    {
+        if (string.IsNullOrEmpty(SelectedCategory))
+        {
+            FilteredProducts = AllProducts.Where(p => p.Quantity > 0).ToList();
+        }
+        else
+        {
+            FilteredProducts = AllProducts.Where(p => p.Category == SelectedCategory && p.Quantity > 0).ToList();
+        }
+    }
+
+    private void AddToCart(Products product)
+    {
+        try
+        {
+            OrderService.AddToCart(product, 1);
+            Snackbar.Add($"{product.Name} added to cart", Severity.Success);
+            
+            if (!CartOpen)
+            {
+                CartOpen = true;
+            }
+            
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error adding item to cart: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void UpdateQuantity(int productId, int newQuantity)
+    {
+        OrderService.UpdateQuantity(productId, newQuantity);
+        StateHasChanged();
+    }
+
+    private void RemoveFromCart(int productId)
+    {
+        OrderService.RemoveFromCart(productId);
+        StateHasChanged();
+    }
+
+    private void ToggleCart()
+    {
+        CartOpen = !CartOpen;
+    }
+
+    private void ProceedToCheckout()
+    {
+        try
+        {
+            if (OrderService.HasItems())
+            {
+                NavigationManager.NavigateTo("/checkout");
+            }
+            else
+            {
+                Snackbar.Add("Your cart is empty. Please add items to proceed.", Severity.Warning);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error proceeding to checkout: {ex.Message}", Severity.Error);
+        }
+    }
+}

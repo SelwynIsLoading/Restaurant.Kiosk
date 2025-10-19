@@ -1,0 +1,16 @@
+# Python dependencies for Restaurant Kiosk peripheral services
+
+# Receipt Printer Service
+python-escpos==3.0
+Flask==3.0.0
+requests==2.31.0
+
+# Cash Reader Service (Arduino)
+pyserial==3.5
+
+# Optional: For advanced printer features
+Pillow==10.1.0
+qrcode==7.4.2
+
+# Development/Testing
+pytest==7.4.3

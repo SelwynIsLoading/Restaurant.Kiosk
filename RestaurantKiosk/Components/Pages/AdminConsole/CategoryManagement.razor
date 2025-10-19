@@ -1,0 +1,410 @@
+@page "/admin/categories"
+@using RestaurantKiosk.Components.Layout
+@using RestaurantKiosk.Data.Entities
+@using RestaurantKiosk.Data.Services
+@using MudBlazor
+@layout AdminLayout
+
+@attribute [Authorize]
+
+@inject ICategoryService categoryService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<div class="container-fluid">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="mb-0">
+                    <i class="fas fa-tags text-primary me-2"></i>
+                    Category Management
+                </h2>
+                <button class="btn btn-primary btn-lg" @onclick="OpenAddCategoryDialog">
+                    <i class="fas fa-plus me-2"></i>
+                    Add New Category
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="searchInput" class="form-label">Search Categories</label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                                <input type="text" class="form-control" id="searchInput" 
+                                       @bind="searchTerm"
+                                       @bind:event="oninput"
+                                       placeholder="Search by name or description...">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="statusFilter" class="form-label">Status</label>
+                            <select class="form-select" id="statusFilter" @bind="statusFilter">
+                                <option value="">All</option>
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <button class="btn btn-outline-secondary w-100" @onclick="ClearFilters">
+                                <i class="fas fa-times me-1"></i>
+                                Clear Filters
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Categories Table -->
+    @if (isLoading)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3 text-muted">Loading categories...</p>
+        </div>
+    }
+    else if (filteredCategories.Any())
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 5%;">ID</th>
+                                        <th style="width: 20%;">Name</th>
+                                        <th style="width: 30%;">Description</th>
+                                        <th style="width: 10%;">Display Order</th>
+                                        <th style="width: 10%;">Status</th>
+                                        <th style="width: 12%;">Created</th>
+                                        <th style="width: 12%;">Updated</th>
+                                        <th style="width: 11%;" class="text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var category in filteredCategories)
+                                    {
+                                        <tr>
+                                            <td class="align-middle">@category.Id</td>
+                                            <td class="align-middle">
+                                                <strong>@category.Name</strong>
+                                            </td>
+                                            <td class="align-middle">
+                                                <span class="text-muted">
+                                                    @(string.IsNullOrEmpty(category.Description) 
+                                                        ? "No description" 
+                                                        : (category.Description.Length > 100 
+                                                            ? category.Description.Substring(0, 100) + "..." 
+                                                            : category.Description))
+                                                </span>
+                                            </td>
+                                            <td class="align-middle">
+                                                @category.DisplayOrder
+                                            </td>
+                                            <td class="align-middle">
+                                                @if (category.IsActive)
+                                                {
+                                                    <span class="badge bg-success">
+                                                        <i class="fas fa-check-circle me-1"></i>Active
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">
+                                                        <i class="fas fa-times-circle me-1"></i>Inactive
+                                                    </span>
+                                                }
+                                            </td>
+                                            <td class="align-middle">
+                                                <small class="text-muted">
+                                                    @category.CreatedAt.ToString("MMM dd, yyyy")
+                                                </small>
+                                            </td>
+                                            <td class="align-middle">
+                                                <small class="text-muted">
+                                                    @(category.UpdatedAt?.ToString("MMM dd, yyyy") ?? "Never")
+                                                </small>
+                                            </td>
+                                            <td class="align-middle text-center">
+                                                <div class="btn-group" role="group">
+                                                    <button class="btn btn-sm btn-outline-primary" 
+                                                            @onclick="() => OpenEditCategoryDialog(category)"
+                                                            title="Edit">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <button class="btn btn-sm btn-outline-danger" 
+                                                            @onclick="() => ConfirmDelete(category)"
+                                                            title="Delete">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-light">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted">
+                                Showing @filteredCategories.Count of @categories.Count categories
+                            </span>
+                            <span class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Active: @categories.Count(c => c.IsActive) | 
+                                Inactive: @categories.Count(c => !c.IsActive)
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-body py-5 text-center">
+                        <i class="fas fa-tags fa-3x text-muted mb-3"></i>
+                        <h4 class="text-muted">No categories found</h4>
+                        <p class="text-muted">
+                            @(categories.Any() 
+                                ? "Try adjusting your search filters" 
+                                : "Create your first category to organize your products")
+                        </p>
+                        @if (!categories.Any())
+                        {
+                            <button class="btn btn-primary" @onclick="OpenAddCategoryDialog">
+                                <i class="fas fa-plus me-2"></i>
+                                Add First Category
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .table-hover tbody tr:hover {
+        background-color: rgba(0, 123, 255, 0.05);
+        cursor: pointer;
+    }
+
+    .btn-group .btn {
+        padding: 0.25rem 0.5rem;
+    }
+
+    .card {
+        border: none;
+    }
+
+    .table thead th {
+        font-weight: 600;
+        color: #495057;
+        border-bottom: 2px solid #dee2e6;
+    }
+</style>
+
+@code {
+    private List<Category> categories = new();
+    private List<Category> filteredCategories = new();
+
+    private string searchTerm1 = "";
+    private string searchTerm
+    {
+        get => searchTerm1;
+        set
+        {
+            searchTerm1 = value;
+            FilterCategories();
+            StateHasChanged();
+        }
+    }
+
+    private string statusFilter1 = "";
+    private string statusFilter
+    {
+        get => statusFilter1;
+        set
+        {
+            statusFilter1 = value;
+            FilterCategories();
+            StateHasChanged();
+        }
+    }
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCategoriesAsync();
+    }
+
+    private async Task LoadCategoriesAsync()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            categories = await categoryService.GetAllCategoriesIncludingInactiveAsync();
+            FilterCategories();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading categories: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void FilterCategories()
+    {
+        filteredCategories = categories.Where(c =>
+            (string.IsNullOrEmpty(searchTerm) ||
+             c.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+             (!string.IsNullOrEmpty(c.Description) && c.Description.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))) &&
+            (string.IsNullOrEmpty(statusFilter) ||
+             (statusFilter == "active" && c.IsActive) ||
+             (statusFilter == "inactive" && !c.IsActive))
+        ).OrderBy(c => c.DisplayOrder).ThenBy(c => c.Name).ToList();
+
+        StateHasChanged();
+    }
+
+    private void ClearFilters()
+    {
+        searchTerm = string.Empty;
+        statusFilter = string.Empty;
+        FilterCategories();
+    }
+
+    private async Task OpenAddCategoryDialog()
+    {
+        var category = new Category();
+        var parameters = new DialogParameters<CategoryDialog>
+        {
+            { x => x.Category, category },
+            { x => x.IsEditing, false }
+        };
+
+        var options = new DialogOptions()
+        {
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true,
+            CloseButton = true,
+            BackdropClick = false
+        };
+
+        var dialog = await DialogService.ShowAsync<CategoryDialog>("Add New Category", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled && result.Data is Category savedCategory)
+        {
+            await LoadCategoriesAsync();
+        }
+    }
+
+    private async Task OpenEditCategoryDialog(Category category)
+    {
+        // Create a copy to avoid modifying the original if user cancels
+        var categoryCopy = new Category
+        {
+            Id = category.Id,
+            Name = category.Name,
+            Description = category.Description,
+            IsActive = category.IsActive,
+            DisplayOrder = category.DisplayOrder,
+            CreatedAt = category.CreatedAt,
+            UpdatedAt = category.UpdatedAt
+        };
+
+        var parameters = new DialogParameters<CategoryDialog>
+        {
+            { x => x.Category, categoryCopy },
+            { x => x.IsEditing, true }
+        };
+
+        var options = new DialogOptions()
+        {
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true,
+            CloseButton = true,
+            BackdropClick = false
+        };
+
+        var dialog = await DialogService.ShowAsync<CategoryDialog>("Edit Category", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled && result.Data is Category updatedCategory)
+        {
+            await LoadCategoriesAsync();
+        }
+    }
+
+    private async Task ConfirmDelete(Category category)
+    {
+        var parameters = new DialogParameters
+        {
+            { "Message", $"Are you sure you want to delete the category '{category.Name}'? If products are using this category, it will be marked as inactive instead of being deleted." }
+        };
+
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Small,
+            CloseButton = true
+        };
+
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Confirm Delete", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await DeleteCategory(category.Id);
+        }
+    }
+
+    private async Task DeleteCategory(int categoryId)
+    {
+        try
+        {
+            var success = await categoryService.DeleteCategoryAsync(categoryId);
+            
+            if (success)
+            {
+                Snackbar.Add("Category deleted successfully!", Severity.Success);
+                await LoadCategoriesAsync();
+            }
+            else
+            {
+                Snackbar.Add("Failed to delete category. Please try again.", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error deleting category: {ex.Message}", Severity.Error);
+        }
+    }
+}
+
