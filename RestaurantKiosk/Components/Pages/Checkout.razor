@@ -427,8 +427,8 @@
                 // Save order to database before payment
                 await CreateOrderInDatabase("Card/Invoice", externalId);
                 
-                var successUrl = $"{baseUrl}payment/success?external_id={externalId}";
-                var failureUrl = $"{baseUrl}payment/failure?external_id={externalId}";
+                // Use the same callback URL as GCash/Maya for consistent processing
+                var callbackUrl = $"{baseUrl}api/callback/payment/callback?external_id={externalId}";
                 
                 Snackbar.Add("Creating payment invoice...", Severity.Info);
                 var invoice = await PaymentService.CreateInvoiceAsync(
@@ -437,8 +437,8 @@
                     CustomerName,
                     CustomerEmail,
                     orderDescription,
-                    successUrl,
-                    failureUrl
+                    callbackUrl,  // Success URL
+                    callbackUrl   // Failure URL (same - CallbackController handles both)
                 );
 
                 paymentUrl = invoice.InvoiceUrl;

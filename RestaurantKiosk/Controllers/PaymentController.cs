@@ -17,6 +17,7 @@ public class PaymentController : ControllerBase
     private readonly IReceiptService _receiptService;
     private readonly IHubContext<OrderHub> _orderHubContext;
     private readonly ILogger<PaymentController> _logger;
+    private readonly IServiceScopeFactory _serviceScopeFactory;
 
     public PaymentController(
         IPaymentService paymentService, 
@@ -25,7 +26,8 @@ public class PaymentController : ControllerBase
         IProductService productService,
         IReceiptService receiptService,
         IHubContext<OrderHub> orderHubContext,
-        ILogger<PaymentController> logger)
+        ILogger<PaymentController> logger,
+        IServiceScopeFactory serviceScopeFactory)
     {
         _paymentService = paymentService;
         _orderService = orderService;
@@ -34,6 +36,7 @@ public class PaymentController : ControllerBase
         _receiptService = receiptService;
         _orderHubContext = orderHubContext;
         _logger = logger;
+        _serviceScopeFactory = serviceScopeFactory;
     }
 
     [HttpPost("create-invoice")]
@@ -291,17 +294,52 @@ public class PaymentController : ControllerBase
                         _logger.LogError(ex, "Failed to send SignalR notification for order: {OrderNumber}", order.OrderNumber);
                     }
                     
-                    // Print receipt
+                    // Print receipt (for card/invoice payment via webhook)
+                    // Use background task with proper DI scope
+                    var orderIdForReceipt = order.Id;
+                    var externalIdForReceipt = externalId ?? "";
                     _ = Task.Run(async () =>
                     {
                         try
                         {
-                            await _receiptService.PrintOrderReceiptAsync(order);
-                            _logger.LogInformation("Receipt printed for invoice payment order: {OrderNumber}", order.OrderNumber);
+                            // Create a new scope for scoped services (IOrderRepository, IReceiptService)
+                            using var scope = _serviceScopeFactory.CreateScope();
+                            var orderRepository = scope.ServiceProvider.GetRequiredService<IOrderRepository>();
+                            var receiptService = scope.ServiceProvider.GetRequiredService<IReceiptService>();
+                            var logger = scope.ServiceProvider.GetRequiredService<ILogger<PaymentController>>();
+                            
+                            // Reload order to ensure we have latest data with items
+                            var orderForReceipt = await orderRepository.GetOrderByExternalIdAsync(externalIdForReceipt);
+                            if (orderForReceipt != null)
+                            {
+                                logger.LogInformation("Printing receipt for Card/Invoice payment (webhook) - Order: {OrderNumber} with {ItemCount} items", 
+                                    orderForReceipt.OrderNumber, orderForReceipt.OrderItems.Count);
+                                
+                                // For card/invoice payments, amount paid equals total (no change)
+                                var printResult = await receiptService.PrintOrderReceiptAsync(
+                                    orderForReceipt, 
+                                    amountPaid: orderForReceipt.TotalAmount, 
+                                    change: 0
+                                );
+                                
+                                if (printResult)
+                                {
+                                    logger.LogInformation("✓ Receipt printed successfully for Card/Invoice payment (webhook) - Order: {OrderNumber}", 
+                                        orderForReceipt.OrderNumber);
+                                }
+                                else
+                                {
+                                    logger.LogWarning("✗ Receipt printing returned false for Order: {OrderNumber} (webhook)", orderForReceipt.OrderNumber);
+                                }
+                            }
+                            else
+                            {
+                                logger.LogWarning("Could not reload order {ExternalId} for receipt printing (webhook)", externalIdForReceipt);
+                            }
                         }
                         catch (Exception ex2)
                         {
-                            _logger.LogError(ex2, "Failed to print receipt for order: {OrderNumber}", order.OrderNumber);
+                            _logger.LogError(ex2, "Failed to print receipt (webhook) for order with external_id: {ExternalId}", externalIdForReceipt);
                         }
                     });
                 }
@@ -362,17 +400,52 @@ public class PaymentController : ControllerBase
                         _logger.LogError(ex, "Failed to send SignalR notification for order: {OrderNumber}", order.OrderNumber);
                     }
                     
-                    // Print receipt
+                    // Print receipt (for e-wallet payment via webhook)
+                    // Use background task with proper DI scope
+                    var orderIdForReceipt = order.Id;
+                    var externalIdForReceipt = externalId ?? "";
                     _ = Task.Run(async () =>
                     {
                         try
                         {
-                            await _receiptService.PrintOrderReceiptAsync(order);
-                            _logger.LogInformation("Receipt printed for e-wallet payment order: {OrderNumber}", order.OrderNumber);
+                            // Create a new scope for scoped services (IOrderRepository, IReceiptService)
+                            using var scope = _serviceScopeFactory.CreateScope();
+                            var orderRepository = scope.ServiceProvider.GetRequiredService<IOrderRepository>();
+                            var receiptService = scope.ServiceProvider.GetRequiredService<IReceiptService>();
+                            var logger = scope.ServiceProvider.GetRequiredService<ILogger<PaymentController>>();
+                            
+                            // Reload order to ensure we have latest data with items
+                            var orderForReceipt = await orderRepository.GetOrderByExternalIdAsync(externalIdForReceipt);
+                            if (orderForReceipt != null)
+                            {
+                                logger.LogInformation("Printing receipt for E-wallet payment (webhook) - Order: {OrderNumber} with {ItemCount} items", 
+                                    orderForReceipt.OrderNumber, orderForReceipt.OrderItems.Count);
+                                
+                                // For e-wallet payments, amount paid equals total (no change)
+                                var printResult = await receiptService.PrintOrderReceiptAsync(
+                                    orderForReceipt, 
+                                    amountPaid: orderForReceipt.TotalAmount, 
+                                    change: 0
+                                );
+                                
+                                if (printResult)
+                                {
+                                    logger.LogInformation("✓ Receipt printed successfully for E-wallet payment (webhook) - Order: {OrderNumber}", 
+                                        orderForReceipt.OrderNumber);
+                                }
+                                else
+                                {
+                                    logger.LogWarning("✗ Receipt printing returned false for Order: {OrderNumber} (webhook)", orderForReceipt.OrderNumber);
+                                }
+                            }
+                            else
+                            {
+                                logger.LogWarning("Could not reload order {ExternalId} for receipt printing (webhook)", externalIdForReceipt);
+                            }
                         }
                         catch (Exception ex2)
                         {
-                            _logger.LogError(ex2, "Failed to print receipt for order: {OrderNumber}", order.OrderNumber);
+                            _logger.LogError(ex2, "Failed to print receipt (webhook) for order with external_id: {ExternalId}", externalIdForReceipt);
                         }
                     });
                 }

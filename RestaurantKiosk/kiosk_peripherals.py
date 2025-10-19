@@ -19,8 +19,9 @@ from typing import Optional, Dict, Any
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from escpos.printer import Usb, Network, Serial as ESCPOSSerial, File
-from escpos.exceptions import USBNotFoundError, Error as ESCPOSError
+# ESC/POS printer library no longer needed - Arduino handles printing directly
+# from escpos.printer import Usb, Network, Serial as ESCPOSSerial, File
+# from escpos.exceptions import USBNotFoundError, Error as ESCPOSError
 
 # ============================================================================
 # CONFIGURATION
@@ -423,38 +424,24 @@ class ArduinoCashReader:
 # ============================================================================
 
 class ReceiptPrinterClient:
-    """Client that polls VPS for print jobs and prints them"""
+    """Client that polls VPS for print jobs and sends to Arduino for printing"""
     
-    def __init__(self, vps_url: str):
+    def __init__(self, vps_url: str, arduino_serial_connection=None):
         self.vps_url = vps_url
-        self.printer = None
-        self.printer_type = config["printer_type"]
+        self.arduino_connection = arduino_serial_connection
         self.session = requests.Session()
         self.running = False
+        self.use_arduino_printer = True  # Set to False to use direct printer connection
         
-    def connect_printer(self) -> bool:
-        """Establish connection to printer"""
+    
+    def _safe_text(self, text: str) -> str:
+        """Convert text to safe ASCII-only format"""
         try:
-            logger.info(f"[PRINTER] Connecting to {self.printer_type} printer...")
-            
-            if self.printer_type == "usb":
-                vendor_id = int(config["printer_usb_vendor_id"], 16)
-                product_id = int(config["printer_usb_product_id"], 16)
-                self.printer = Usb(vendor_id, product_id)
-            elif self.printer_type == "serial":
-                self.printer = ESCPOSSerial(
-                    config["printer_serial_port"],
-                    baudrate=config["printer_serial_baudrate"]
-                )
-            elif self.printer_type == "file":
-                self.printer = File("/tmp/receipt.txt")
-            
-            logger.info("[PRINTER] Successfully connected to printer")
-            return True
-            
+            # Convert to ASCII, replacing non-ASCII characters with '?'
+            return text.encode('ascii', errors='replace').decode('ascii')
         except Exception as e:
-            logger.error(f"[PRINTER] Failed to connect to printer: {e}")
-            return False
+            logger.warning(f"[PRINTER] Error converting text to ASCII: {e}")
+            return text
     
     def check_for_print_jobs(self) -> Optional[Dict[str, Any]]:
         """Poll VPS for pending print jobs"""
@@ -465,7 +452,7 @@ class ReceiptPrinterClient:
             if response.status_code == 200:
                 data = response.json()
                 if data.get('hasPrintJob'):
-                    return data.get('receiptData')
+                    return data
             elif response.status_code == 204:
                 return None
             else:
@@ -477,28 +464,60 @@ class ReceiptPrinterClient:
         return None
     
     def print_receipt(self, receipt_data: Dict[str, Any]) -> bool:
-        """Print a receipt"""
+        """Print a receipt via Arduino with slow, controlled transmission"""
         try:
-            if not self.printer:
-                if not self.connect_printer():
-                    return False
-            
             order_number = receipt_data.get('orderNumber', 'N/A')
-            logger.info(f"[PRINTER] Printing receipt for order: {order_number}")
+            logger.info(f"[PRINTER] Printing receipt via Arduino for order: {order_number}")
             
-            # Initialize printer
-            self.printer.hw('INIT')
+            if not self.arduino_connection or not self.arduino_connection.is_open:
+                logger.error("[PRINTER] Arduino not connected")
+                return False
             
-            # Print receipt sections
-            self._print_header(receipt_data)
-            self._print_order_details(receipt_data)
-            self._print_items(receipt_data.get('items', []))
-            self._print_totals(receipt_data)
-            self._print_payment_info(receipt_data)
-            self._print_footer(receipt_data)
+            # Clear any pending data in serial buffer
+            self.arduino_connection.reset_input_buffer()
+            self.arduino_connection.reset_output_buffer()
             
-            # Cut paper
-            self.printer.cut()
+            # Start print job
+            logger.info(f"[PRINTER] Starting print job for order {order_number}")
+            self._send_arduino_command("PRINT:START")
+            time.sleep(1.0)  # Give Arduino plenty of time to initialize printer
+            
+            # Send receipt content line by line with significant delay
+            lines = self._generate_receipt_lines(receipt_data)
+            total_lines = len(lines)
+            
+            logger.info(f"[PRINTER] Generated {total_lines} receipt lines total")
+            
+            for i, line in enumerate(lines):
+                # Build the full command that will be sent
+                full_command = f"PRINT:LINE:{line}"
+                command_length = len(full_command)
+                
+                # Log every line with full command details
+                print(f"[PRINTER] Sending line {i+1}/{total_lines}: ({command_length} bytes) '{full_command}'")
+                logger.info(f"[PRINTER] >>> Line {i+1}/{total_lines} ({command_length} bytes): '{full_command}'")
+                
+                # Check if command is safe before sending
+                if command_length > 63:
+                    logger.error(f"[PRINTER] ⚠️ BUFFER OVERFLOW RISK! Command is {command_length} bytes (max 64)")
+                
+                self._send_arduino_command(f"PRINT:LINE:{line}")
+                
+                # Much slower transmission with longer delays
+                # Arduino needs time to process and print each line
+                line_length = len(line)
+                if line_length > 30:
+                    time.sleep(0.4)  # Long lines need much more time
+                elif line_length > 0:
+                    time.sleep(0.3)  # Normal lines - be very conservative
+                else:
+                    time.sleep(0.1)  # Empty lines
+            
+            # End print job (cut paper)
+            logger.info(f"[PRINTER] All {total_lines} lines sent, cutting paper...")
+            time.sleep(0.5)  # Extra delay before cut command
+            self._send_arduino_command("PRINT:END")
+            time.sleep(3)  # Wait even longer for paper feed and cut
             
             logger.info(f"[PRINTER] Receipt printed successfully for order: {order_number}")
             return True
@@ -507,81 +526,145 @@ class ReceiptPrinterClient:
             logger.error(f"[PRINTER] Error printing receipt: {e}")
             return False
     
-    def _print_header(self, data: Dict[str, Any]):
-        """Print receipt header"""
-        self.printer.set(align='center', text_type='B', width=2, height=2)
-        self.printer.text(data.get('restaurantName', 'Restaurant') + '\n')
-        self.printer.set(align='center', text_type='normal')
-        self.printer.text(data.get('restaurantAddress', '') + '\n')
-        self.printer.text(data.get('restaurantPhone', '') + '\n')
-        self.printer.text('\n')
-        self.printer.text('=' * 32 + '\n\n')
+    def _send_arduino_command(self, command: str):
+        """Send command to Arduino with strict length check"""
+        if self.arduino_connection and self.arduino_connection.is_open:
+            # Arduino Serial buffer is 64 bytes by default
+            # Be very conservative - max 50 chars to be safe
+            if len(command) > 50:
+                logger.error(f"[PRINTER] Command TOO LONG ({len(command)} chars)! Line: '{command}'")
+                logger.error(f"[PRINTER] Truncating to 50 chars...")
+                command = command[:50]
+            
+            # Log what we're actually sending
+            logger.debug(f"[PRINTER] Sending ({len(command)} chars): {command}")
+            
+            self.arduino_connection.write(f"{command}\n".encode('utf-8'))
+            self.arduino_connection.flush()
+            time.sleep(0.02)  # Small delay after flushing
     
-    def _print_order_details(self, data: Dict[str, Any]):
-        """Print order information"""
-        self.printer.set(align='left', text_type='B')
-        self.printer.text(f"Order #: {data.get('orderNumber', 'N/A')}\n")
-        self.printer.set(text_type='normal')
-        self.printer.text(f"Date: {data.get('orderDate', '')}\n")
-        if data.get('customerName'):
-            self.printer.text(f"Customer: {data['customerName']}\n")
-        self.printer.text('\n' + '-' * 32 + '\n\n')
-    
-    def _print_items(self, items: list):
-        """Print order items"""
-        self.printer.text(f"{'Item':<20} {'Qty':>4} {'Amount':>7}\n")
-        self.printer.text('-' * 32 + '\n')
+    def _generate_receipt_lines(self, data: Dict[str, Any]) -> list:
+        """Generate receipt lines - NO SEPARATOR LINES to avoid printer issues"""
+        lines = []
         
-        for item in items:
-            name = item.get('productName', 'Unknown')[:20]
+        # Header - Centered
+        name = self._safe_text(data.get('restaurantName', 'Restaurant'))
+        address = self._safe_text(data.get('restaurantAddress', ''))
+        phone = self._safe_text(data.get('restaurantPhone', ''))
+        
+        lines.append(self._center_text(name, 28))
+        if address:
+            lines.append(self._center_text(address, 28))
+        if phone:
+            lines.append(self._center_text(phone, 28))
+        lines.append('')
+        lines.append('')
+        
+        # Order details
+        order_num = self._safe_text(data.get('orderNumber', 'N/A'))[:20]
+        order_date = self._safe_text(data.get('orderDate', ''))[:25]
+        
+        lines.append('Order: ' + order_num)
+        lines.append('Date: ' + order_date)
+        
+        if data.get('customerName'):
+            customer = self._safe_text(data['customerName'])[:20]
+            lines.append('Cust: ' + customer)
+        
+        lines.append('')
+        lines.append('')
+        
+        # Items header
+        lines.append('ITEM             QTY  PRICE')
+        lines.append('')
+        
+        # Items - Build each item line
+        items_list = data.get('items', [])
+        logger.info(f"[PRINTER] Processing {len(items_list)} items for receipt")
+        
+        for idx, item in enumerate(items_list):
+            item_name = self._safe_text(item.get('productName', 'Unknown'))
             qty = item.get('quantity', 0)
             price = item.get('lineTotal', 0.0)
-            self.printer.text(f"{name:<20} {qty:>4} {price:>7.2f}\n")
+            
+            # Truncate and pad name to 16 chars
+            if len(item_name) > 16:
+                item_name = item_name[:16]
+            item_name = item_name.ljust(16)
+            
+            # Format numbers
+            qty_str = str(qty).rjust(3)
+            price_str = f'{price:.2f}'.rjust(8)
+            
+            # Build line (27 chars total)
+            item_line = item_name + ' ' + qty_str + price_str
+            
+            logger.info(f"[PRINTER] Item {idx+1} line: '{item_line}'")
+            lines.append(item_line)
         
-        self.printer.text('\n')
-    
-    def _print_totals(self, data: Dict[str, Any]):
-        """Print totals"""
-        self.printer.text('-' * 32 + '\n')
-        self.printer.text(f"{'Subtotal:':<24} {data.get('subTotal', 0):>7.2f}\n")
+        lines.append('')
+        lines.append('')
         
-        if data.get('tax', 0) > 0:
-            self.printer.text(f"{'VAT (12%):':<24} {data['tax']:>7.2f}\n")
+        # Totals
+        subtotal = data.get('subTotal', 0)
+        tax = data.get('tax', 0)
+        total = data.get('totalAmount', 0)
         
-        self.printer.text('-' * 32 + '\n')
-        self.printer.set(text_type='B', width=2, height=2)
-        self.printer.text(f"TOTAL: PHP {data.get('totalAmount', 0):.2f}\n")
-        self.printer.set(text_type='normal', width=1, height=1)
-        self.printer.text('\n')
-    
-    def _print_payment_info(self, data: Dict[str, Any]):
-        """Print payment information"""
-        self.printer.text(f"Payment: {data.get('paymentMethod', 'N/A')}\n")
+        lines.append('Subtotal:' + f'{subtotal:.2f}'.rjust(18))
+        
+        if tax > 0:
+            lines.append('VAT:' + f'{tax:.2f}'.rjust(23))
+        
+        lines.append('')
+        lines.append('TOTAL:' + f'{total:.2f}'.rjust(21))
+        lines.append('')
+        lines.append('')
+        
+        # Payment info
+        payment_method = self._safe_text(data.get('paymentMethod', 'N/A'))[:15]
+        lines.append('Pay: ' + payment_method)
+        lines.append('')
         
         if data.get('amountPaid'):
-            self.printer.text(f"Paid: PHP {data['amountPaid']:.2f}\n")
-            if data.get('change', 0) > 0:
-                self.printer.set(text_type='B')
-                self.printer.text(f"Change: PHP {data['change']:.2f}\n")
-                self.printer.set(text_type='normal')
+            amount_paid = data['amountPaid']
+            lines.append('Paid:' + f'{amount_paid:.2f}'.rjust(22))
+            
+            change = data.get('change', 0)
+            if change > 0:
+                lines.append('Change:' + f'{change:.2f}'.rjust(20))
         
-        self.printer.text('\n')
+        lines.append('')
+        lines.append('')
+        
+        # Footer - Centered
+        lines.append(self._center_text('THANK YOU!', 28))
+        lines.append(self._center_text('Please come again', 28))
+        lines.append('')
+        lines.append(self._center_text('Have a great day!', 28))
+        lines.append('')
+        lines.append('')
+        lines.append('')
+        
+        return lines
     
-    def _print_footer(self, data: Dict[str, Any]):
-        """Print receipt footer"""
-        self.printer.set(align='center')
-        self.printer.text('=' * 32 + '\n')
-        self.printer.set(text_type='B')
-        self.printer.text('Thank You!\n')
-        self.printer.set(text_type='normal')
-        self.printer.text('Please come again\n\n')
+    def _center_text(self, text: str, width: int) -> str:
+        """Manually center text to avoid encoding issues"""
+        text = text.strip()
+        if len(text) >= width:
+            return text[:width]
         
-        if data.get('qrData'):
-            try:
-                self.printer.qr(data['qrData'], size=6)
-                self.printer.text('\n')
-            except:
-                pass
+        total_padding = width - len(text)
+        left_padding = total_padding // 2
+        right_padding = total_padding - left_padding
+        
+        result = (' ' * left_padding) + text + (' ' * right_padding)
+        
+        # Safety check - ensure we don't exceed width
+        if len(result) > width:
+            result = result[:width]
+        
+        return result
+    
     
     def mark_job_completed(self, job_id: str) -> bool:
         """Notify VPS that print job is completed"""
@@ -605,16 +688,18 @@ class ReceiptPrinterClient:
     
     def run(self):
         """Main loop - poll for print jobs"""
-        logger.info("[PRINTER] Starting receipt printer loop...")
+        logger.info("[PRINTER] Starting receipt printer loop (Arduino mode)...")
         self.running = True
-        
-        # Connect to printer on startup
-        self.connect_printer()
         
         poll_interval = config["printer_poll_interval"]
         
         while self.running:
             try:
+                # Wait for Arduino connection to be available
+                if not self.arduino_connection or not self.arduino_connection.is_open:
+                    time.sleep(1)
+                    continue
+                
                 # Check for print jobs
                 job_data = self.check_for_print_jobs()
                 
@@ -624,7 +709,7 @@ class ReceiptPrinterClient:
                     
                     logger.info(f"[PRINTER] Received print job: {job_id}")
                     
-                    # Print receipt
+                    # Print receipt via Arduino
                     success = self.print_receipt(receipt_data)
                     
                     # Notify VPS
@@ -647,9 +732,9 @@ class ReceiptPrinterClient:
 # ============================================================================
 
 def main():
-    """Main entry point - runs both cash reader and printer in separate threads"""
+    """Main entry point - runs both cash reader and printer sharing Arduino connection"""
     logger.info("=" * 80)
-    logger.info("Restaurant Kiosk - Peripherals Manager (Unified)")
+    logger.info("Restaurant Kiosk - Peripherals Manager (Arduino Unified)")
     logger.info("=" * 80)
     logger.info(f"Environment: {config.get('environment', 'development')}")
     logger.info(f"VPS API URL: {config['vps_api_url']}")
@@ -657,13 +742,14 @@ def main():
     logger.info("")
     logger.info("Enabled Modules:")
     logger.info(f"  - Cash Reader: {'✓' if config['enable_cash_reader'] else '✗'}")
-    logger.info(f"  - Receipt Printer: {'✓' if config['enable_printer'] else '✗'}")
+    logger.info(f"  - Receipt Printer (via Arduino): {'✓' if config['enable_printer'] else '✗'}")
     logger.info("")
     
     threads = []
+    cash_reader = None
     
     try:
-        # Start cash reader thread
+        # Start cash reader thread (it creates the Arduino connection)
         if config["enable_cash_reader"]:
             logger.info("[CASH] Configuration:")
             logger.info(f"  - Arduino Port: {config['arduino_port']}")
@@ -682,26 +768,32 @@ def main():
             cash_thread.start()
             threads.append((cash_thread, cash_reader))
             logger.info("[CASH] Cash reader thread started")
+            
+            # Give Arduino time to connect
+            time.sleep(3)
         
-        # Start printer thread
-        if config["enable_printer"]:
+        # Start printer thread (shares Arduino connection)
+        if config["enable_printer"] and cash_reader:
             logger.info("[PRINTER] Configuration:")
-            logger.info(f"  - Printer Type: {config['printer_type']}")
-            if config['printer_type'] == 'serial':
-                logger.info(f"  - Serial Port: {config['printer_serial_port']}")
-                logger.info(f"  - Baud Rate: {config['printer_serial_baudrate']}")
+            logger.info(f"  - Mode: Arduino Serial (shared connection)")
+            logger.info(f"  - Arduino Port: {config['arduino_port']}")
             logger.info(f"  - Poll Interval: {config['printer_poll_interval']}s")
             logger.info("")
             
-            printer_client = ReceiptPrinterClient(config["vps_api_url"])
+            # Share the Arduino serial connection
+            printer_client = ReceiptPrinterClient(
+                config["vps_api_url"],
+                arduino_serial_connection=cash_reader.serial_connection
+            )
             
             printer_thread = threading.Thread(target=printer_client.run, name="PrinterClient", daemon=False)
             printer_thread.start()
             threads.append((printer_thread, printer_client))
-            logger.info("[PRINTER] Receipt printer thread started")
+            logger.info("[PRINTER] Receipt printer thread started (using Arduino)")
         
         logger.info("=" * 80)
         logger.info("All modules started successfully")
+        logger.info("Arduino handles both cash reading AND receipt printing!")
         logger.info("Press Ctrl+C to stop")
         logger.info("=" * 80)
         
